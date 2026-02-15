@@ -17,6 +17,14 @@ export const getPublications = (page: number, size: number) => {
         `/clubs/${config.public.clubSlug}/publications?page=${page}&size=${size}`
     )
 }
+
+export const getPublication = (publicationSlug: string) => {
+    const config = useRuntimeConfig()
+
+    return apiFetch<PublicationResponseDto>(
+        `/clubs/${config.public.clubSlug}/publications/${publicationSlug}`
+    )
+}
 export const deletePublication = async (publicationId: string) => {
     const config = useRuntimeConfig()
     const { accessToken } = useAuth()

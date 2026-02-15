@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
 
+const props = withDefaults(defineProps<{
+  collapsible?: boolean
+}>(), {
+  collapsible: true
+})
+
 const expanded = ref(false)
 const isOverflowing = ref(false)
 const contentRef = ref<HTMLElement | null>(null)
@@ -14,7 +20,7 @@ function toggle() {
 onMounted(async () => {
   await nextTick()
 
-  if (contentRef.value) {
+  if (props.collapsible && contentRef.value) {
     isOverflowing.value =
         contentRef.value.scrollHeight > MAX_HEIGHT
   }
@@ -26,18 +32,18 @@ onMounted(async () => {
     <div
         ref="contentRef"
         class="content"
-        :class="{ collapsed: isOverflowing && !expanded }"
+        :class="{ collapsed: props.collapsible && isOverflowing && !expanded }"
     >
       <slot />
 
       <div
-          v-if="isOverflowing && !expanded"
+          v-if="props.collapsible && isOverflowing && !expanded"
           class="fade"
       ></div>
     </div>
 
     <button
-        v-if="isOverflowing"
+        v-if="props.collapsible && isOverflowing"
         class="toggle-btn"
         @click="toggle"
     >

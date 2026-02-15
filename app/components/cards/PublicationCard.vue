@@ -5,11 +5,12 @@ import type { PublicationResponseDto } from "~/types/publications";
 defineProps<{
   publication: PublicationResponseDto,
   title?: string
+  collapsible?: boolean
 }>()
 </script>
 
 <template>
-  <CardBase>
+  <CardBase :collapsible="collapsible">
     <h1 class="card-title">
       {{ title || publication.title }}
     </h1>

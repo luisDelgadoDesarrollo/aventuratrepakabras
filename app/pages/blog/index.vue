@@ -67,11 +67,14 @@ const paginationItems = computed<PaginationItem[]>(() => {
 <template>
   <div v-if="data" class="publications-container">
 
-    <PublicationCard
+    <NuxtLink
         v-for="p in data.content"
         :key="p.publicationId"
-        :publication="p"
-    />
+        :to="`/blog/${p.slug}`"
+        class="publication-link"
+    >
+      <PublicationCard :publication="p" :collapsible="true"/>
+    </NuxtLink>
 
     <div class="pagination">
       <button
@@ -115,6 +118,11 @@ const paginationItems = computed<PaginationItem[]>(() => {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+}
+
+.publication-link {
+  text-decoration: none;
+  color: inherit;
 }
 .pagination {
   display: flex;
