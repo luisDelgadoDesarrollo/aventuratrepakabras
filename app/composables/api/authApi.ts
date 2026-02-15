@@ -1,6 +1,8 @@
 import type {LoginRequestDto, TokenResponseDto} from "~/types/auth";
 import {apiFetch} from "~/composables/api/apiClient";
 
+let refreshPromise: Promise<TokenResponseDto> | null = null
+
 export const login = (payload: LoginRequestDto) => {
 
     return apiFetch<TokenResponseDto>(
@@ -13,11 +15,21 @@ export const login = (payload: LoginRequestDto) => {
 }
 
 export const refresh = async () => {
+    if (refreshPromise) return await refreshPromise
 
-    return await apiFetch<TokenResponseDto>(`/auth/refresh`, {
+    const headers = import.meta.server ? useRequestHeaders(["cookie"]) : undefined
+
+    refreshPromise = apiFetch<TokenResponseDto>(`/auth/refresh`, {
         method: "POST",
-        credentials: "include"
+        credentials: "include",
+        headers
     })
+
+    try {
+        return await refreshPromise
+    } finally {
+        refreshPromise = null
+    }
 }
 
 export const logout = async () => {
@@ -26,4 +38,3 @@ export const logout = async () => {
         credentials: "include"
     })
 }
-
