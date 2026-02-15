@@ -5,7 +5,7 @@ import type {TokenResponseDto} from "~/types/auth";
 const { clearToken } = useAuth()
 
 async function logout() {
-  clearToken()
+  await clearToken()
   await navigateTo("/")
 }
 onMounted(async () => {

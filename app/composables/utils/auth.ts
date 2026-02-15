@@ -1,3 +1,5 @@
+import {logout} from "~/composables/api/authApi";
+
 export const useAuth = () => {
     const accessToken = useState<string | null>("access_token", () => null)
 
@@ -5,8 +7,9 @@ export const useAuth = () => {
         accessToken.value = token
     }
 
-    const clearToken = () => {
+    const clearToken = async () => {
         accessToken.value = null
+        await logout()
     }
 
     return {

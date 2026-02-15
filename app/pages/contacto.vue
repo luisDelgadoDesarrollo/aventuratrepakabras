@@ -43,7 +43,6 @@ async function handleSubmit() {
   success.value = false
 
   try {
-    console.log("Enviando:", form)
 
     await sendContactMessage(form)
     

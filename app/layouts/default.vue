@@ -13,7 +13,7 @@ const { setToken,accessToken } = useAuth()
 
 
 async function handleOpenLogin(){
-  if(accessToken){
+  if(accessToken.value){
     await navigateTo("/admin")
   }
   else {
@@ -23,7 +23,6 @@ async function handleOpenLogin(){
 
 async function handleLogin() {
   loginError.value = ""
-
   try {
     const token = await login({
       username: email.value,
