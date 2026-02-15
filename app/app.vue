@@ -1,4 +1,8 @@
+<script>
+import './assets/css/theme.css'
+</script>
 <template>
-  <NuxtRouteAnnouncer />
-  <NuxtPage />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>

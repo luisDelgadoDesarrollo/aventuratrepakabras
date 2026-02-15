@@ -1,0 +1,48 @@
+.card-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--color-primary);
+    text-align: center;
+}
+
+.card-section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.card-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.card-link:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+}
+.section-divider {
+    width: 60px;
+    height: 4px;
+    background: var(--color-primary);
+    margin: 0.75rem auto 2rem;
+    border-radius: 2px;
+}
+.image-hover {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.image-hover:hover {
+    transform: scale(1.03);
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+

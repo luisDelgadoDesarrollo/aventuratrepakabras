@@ -1,0 +1,89 @@
+/* ===== BOTONES ACCIONES ===== */
+
+.actions-cell {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    border: none;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: all 0.2s ease;
+}
+
+/* VER → color principal */
+.view-btn {
+    background: var(--color-primary);
+    color: white;
+}
+
+.view-btn:hover {
+    opacity: 0.9;
+}
+
+/* EDITAR → azul profesional */
+.edit-new-btn {
+    background: #3b82f6;
+    color: white;
+}
+
+.edit-new-btn:hover {
+    background: #2563eb;
+}
+
+/* BORRAR → rojo controlado */
+.delete-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
+}
+
+/* ===== TABLA BASE ===== */
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 1rem;
+    text-align: left;
+}
+
+.admin-table thead {
+    background: #f1f5f9;
+}
+
+.admin-table tbody tr {
+    border-top: 1px solid #e5e7eb;
+}
+
+.admin-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.table-wrapper {
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8fafc;
+}
