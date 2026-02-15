@@ -58,7 +58,8 @@ const buildPublicationFormData = (
         })
     } else {
         Object.entries(files).forEach(([key, file]) => {
-            formData.append(key, file)
+            // Keep "files" as multipart field and use image-* as filename.
+            formData.append("files", file, key)
         })
     }
 

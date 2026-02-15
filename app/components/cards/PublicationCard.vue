@@ -18,7 +18,7 @@ defineProps<{
     <div v-if="publication">
       <p>{{ publication.text }}</p>
 
-      <div v-if="publication.links">
+      <div v-if="publication.links.length > 0">
         <div class="links-header">
           <h3 class="card-section-title">Enlaces de interés</h3>
         </div>
