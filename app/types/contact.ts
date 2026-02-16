@@ -4,3 +4,10 @@ export interface ContactRequestDto {
     message: string;
     phoneNumber: string;
 }
+
+export interface ClubContactDto{
+    clubId?: number | null;
+    contactEmail: string;
+    phone?: string;
+    phoneNumber?: string;
+}

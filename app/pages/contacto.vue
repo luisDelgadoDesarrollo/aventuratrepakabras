@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue"
-import {sendContactMessage} from "~/composables/api/contactApi";
+import {getContact, sendContactMessage} from "~/composables/api/contactApi";
+import type {ClubContactDto} from "~/types/contact";
+
+
+const {data: contact} = await useAsyncData<ClubContactDto>(
+    'club-contact',
+    () => getContact()
+)
 
 export interface ContactRequestDto {
   name: string
@@ -74,11 +81,11 @@ async function handleSubmit() {
 
       <div class="contact-methods">
 
-        <div class="method">
+        <div v-if="contact?.phone || contact?.phoneNumber" class="method">
           <div class="icon-circle">📞</div>
           <div>
             <strong>Teléfono</strong>
-            <p>+34 600 123 456</p>
+            <p>{{ contact?.phone ?? contact?.phoneNumber }}</p>
           </div>
         </div>
 
@@ -86,7 +93,7 @@ async function handleSubmit() {
           <div class="icon-circle">✉️</div>
           <div>
             <strong>Email</strong>
-            <p>contacto@tudominio.com</p>
+            <p>{{ contact?.contactEmail }}</p>
           </div>
         </div>
 
@@ -162,7 +169,7 @@ async function handleSubmit() {
 .info-text {
   margin-bottom: 2rem;
   line-height: 1.6;
-  color: var(--color-text-secondary);
+  color: var(--color-text);
 }
 
 .contact-methods {
@@ -283,4 +290,5 @@ button:disabled {
 }
 
 </style>
+
 
