@@ -1,6 +1,7 @@
 import type {ImageRequestDto} from "~/types/images";
 import type {UsResponseDto} from "~/types/club";
 import {apiFetch} from "~/composables/api/apiClient";
+import {appendFilesPart, appendJsonPart, type MultipartFiles} from "~/composables/api/multipart";
 import {useAuth} from "~/composables/utils/auth";
 export const getUs = () =>
 {
@@ -17,26 +18,12 @@ export interface UsRequestDto {
 
 const buildUsFormData = (
     request: UsRequestDto,
-    files: Record<string, File> | File[] = {}
+    files: MultipartFiles = {}
 ) => {
     const formData = new FormData()
 
-    formData.append(
-        "us",
-        new Blob([JSON.stringify(request)], { type: "application/json" })
-    )
-
-    if (Array.isArray(files)) {
-        files.forEach((file) => {
-            formData.append("files", file)
-        })
-    } else {
-        Object.entries(files).forEach(([key, file]) => {
-            // Backend expects @RequestPart("files") List<MultipartFile>.
-            // Keep "files" as part name and send image-* as multipart filename.
-            formData.append("files", file, key)
-        })
-    }
+    appendJsonPart(formData, "us", request)
+    appendFilesPart(formData, files, "files")
 
     return formData
 }
@@ -44,7 +31,7 @@ const buildUsFormData = (
 const sendUsForm = async (
     method: "POST" | "PUT",
     request: UsRequestDto,
-    files: Record<string, File> | File[] = {}
+    files: MultipartFiles = {}
 ) => {
     const config = useRuntimeConfig()
     const { accessToken } = useAuth()
@@ -62,14 +49,14 @@ const sendUsForm = async (
 
 export const createUs = async (
     request: UsRequestDto,
-    files: Record<string, File> | File[] = {}
+    files: MultipartFiles = {}
 ) => {
     return await sendUsForm("POST", request, files)
 }
 
 export const updateUs = async (
     request: UsRequestDto,
-    files: Record<string, File> | File[] = {}
+    files: MultipartFiles = {}
 ) => {
     return await sendUsForm("PUT", request, files)
 }

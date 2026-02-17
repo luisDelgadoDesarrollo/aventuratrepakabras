@@ -180,12 +180,12 @@ watch(
 
 <template>
   <BaseDialog v-model="isOpen">
-    <div class="dialog-header">
+    <div class="admin-dialog-header">
       <h2>{{ isEditMode ? "Editar publicacion" : "Crear publicacion" }}</h2>
     </div>
 
-    <form class="publication-form" @submit.prevent="handleCreate">
-      <div class="form-group">
+    <form class="admin-form publication-form" @submit.prevent="handleCreate">
+      <div class="admin-form-group">
         <label for="publication-title">Titulo</label>
         <input
           id="publication-title"
@@ -196,7 +196,7 @@ watch(
         />
       </div>
 
-      <div class="form-group">
+      <div class="admin-form-group">
         <label for="publication-text">Texto</label>
         <textarea
           id="publication-text"
@@ -216,7 +216,7 @@ watch(
 
       <LinkForm v-model="createForm.links" title="Links" add-label="+ Link" />
 
-      <div class="form-actions">
+      <div class="admin-form-actions">
         <button type="submit" class="primary-btn" :disabled="isSubmitting">
           {{ isEditMode ? "Guardar cambios" : "Guardar" }}
         </button>
@@ -229,48 +229,7 @@ watch(
 </template>
 
 <style scoped>
-.dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
 .publication-form {
-  display: flex;
-  flex-direction: column;
   gap: 1.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-weight: 600;
-  color: var(--color-secondary);
-}
-
-.form-group input,
-.form-group textarea {
-  padding: 0.75rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background: white;
-  font-size: 0.95rem;
-}
-
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-}
-
-@media (max-width: 768px) {
-  .form-actions {
-    flex-direction: column;
-  }
 }
 </style>

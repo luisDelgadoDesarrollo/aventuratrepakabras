@@ -1,5 +1,6 @@
 import type {CreatePublicationRequestDto, PublicationResponseDto} from "~/types/publications";
 import {apiFetch} from "~/composables/api/apiClient";
+import {appendFilesPart, appendJsonPart, type MultipartFiles} from "~/composables/api/multipart";
 import type {PageResponse} from "~/types/page";
 import {useAuth} from "~/composables/utils/auth";
 export const getLastPublication = () =>
@@ -43,25 +44,12 @@ export const deletePublication = async (publicationId: string) => {
 
 const buildPublicationFormData = (
     request: CreatePublicationRequestDto,
-    files: Record<string, File> | File[] = {}
+    files: MultipartFiles = {}
 ) => {
     const formData = new FormData()
 
-    formData.append(
-        "data",
-        new Blob([JSON.stringify(request)], { type: "application/json" })
-    )
-
-    if (Array.isArray(files)) {
-        files.forEach((file) => {
-            formData.append("files", file)
-        })
-    } else {
-        Object.entries(files).forEach(([key, file]) => {
-            // Keep "files" as multipart field and use image-* as filename.
-            formData.append("files", file, key)
-        })
-    }
+    appendJsonPart(formData, "data", request)
+    appendFilesPart(formData, files, "files")
 
     return formData
 }
@@ -70,7 +58,7 @@ const sendPublicationForm = async (
     url: string,
     method: "POST" | "PUT",
     request: CreatePublicationRequestDto,
-    files: Record<string, File> | File[] = {}
+    files: MultipartFiles = {}
 ) => {
     const { accessToken } = useAuth()
     const formData = buildPublicationFormData(request, files)
@@ -87,7 +75,7 @@ const sendPublicationForm = async (
 
 export const createPublication = async (
     request: CreatePublicationRequestDto,
-    files: Record<string, File> | File[] = {}
+    files: MultipartFiles = {}
 ) => {
     const config = useRuntimeConfig()
     const url = `${config.public.apiBase}/clubs/${config.public.clubSlug}/publications`
@@ -98,7 +86,7 @@ export const createPublication = async (
 export const updatePublication = async (
     publicationSlug: string,
     request: CreatePublicationRequestDto,
-    files: Record<string, File> | File[] = {}
+    files: MultipartFiles = {}
 ) => {
     const config = useRuntimeConfig()
     const url = `${config.public.apiBase}/clubs/${config.public.clubSlug}/publications/${publicationSlug}`

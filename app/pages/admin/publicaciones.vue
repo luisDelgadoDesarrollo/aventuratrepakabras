@@ -62,9 +62,9 @@ async function handleDelete(item: PublicationResponseDto) {
 </script>
 
 <template>
-  <div class="page-header">
-    <h1 class="page-title">Publicaciones</h1>
-    <div class="header-actions">
+  <div class="admin-page-header">
+    <h1 class="admin-page-title">Publicaciones</h1>
+    <div class="admin-header-actions">
       <button class="primary-btn edit-new-btn" @click="openCreate">
         + Nueva publicacion
       </button>
@@ -135,25 +135,3 @@ async function handleDelete(item: PublicationResponseDto) {
     @saved="handleSaved"
   />
 </template>
-
-<style scoped>
-.page-header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.header-actions {
-  justify-self: end;
-  display: flex;
-  align-items: center;
-}
-
-.page-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0;
-  color: var(--color-primary);
-}
-</style>
