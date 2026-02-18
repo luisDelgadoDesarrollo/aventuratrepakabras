@@ -35,3 +35,32 @@ export const sendContactMessage = (payload: ContactRequestDto) => {
         }
     )
 }
+
+export const sendMembershipRequest = (signUp: File, receipt: File) => {
+    const config = useRuntimeConfig()
+    const formData = new FormData()
+    formData.append("signUp", signUp)
+    formData.append("receipt", receipt)
+
+    return apiFetch<void>(
+        `/clubs/${config.public.clubSlug}/contact/memberShipRequest`,
+        {
+            method: "POST",
+            body: formData
+        }
+    )
+}
+
+export const sendFederationRequest = (signUp: File) => {
+    const config = useRuntimeConfig()
+    const formData = new FormData()
+    formData.append("signUp", signUp)
+
+    return apiFetch<void>(
+        `/clubs/${config.public.clubSlug}/contact/federation`,
+        {
+            method: "POST",
+            body: formData
+        }
+    )
+}

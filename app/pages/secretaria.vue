@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref } from "vue"
+import { sendFederationRequest, sendMembershipRequest } from "~/composables/api/contactApi"
 import { getDoc } from "~/composables/api/docApi"
 import { PdfType } from "~/types/pdf"
 
@@ -21,6 +22,18 @@ const downloadError = ref("")
 const documentsError = ref("")
 const availableDocuments = ref<(DocumentCardItem & { url: string })[]>([])
 
+const joinName = ref("")
+const joinDni = ref("")
+const signupRequestFile = ref<File | null>(null)
+const paymentProofFile = ref<File | null>(null)
+const federateName = ref("")
+const federateDni = ref("")
+const federationRequestFile = ref<File | null>(null)
+const isSubmittingMembership = ref(false)
+const isSubmittingFederation = ref(false)
+const formStatusMessage = ref("")
+const formErrorMessage = ref("")
+
 const documents: DocumentCardItem[] = [
   {
     type: PdfType.BY_LAWS,
@@ -30,7 +43,7 @@ const documents: DocumentCardItem[] = [
   {
     type: PdfType.EQUALITY_PLAN,
     title: "Plan de igualdad",
-    description: "Medidas y compromisos del club para promover la igualdad y la inclusión."
+    description: "Medidas y compromisos del club para promover la igualdad y la inclusion."
   },
   {
     type: PdfType.MEMBERSHIP_SIGNUP,
@@ -40,12 +53,65 @@ const documents: DocumentCardItem[] = [
   {
     type: PdfType.FEDERATION_APPLICATION,
     title: "Solicitud federativa",
-    description: "Documento necesario para tramitar la solicitud de federación."
+    description: "Documento necesario para tramitar la solicitud de federacion."
   }
 ].sort((a, b) => a.title.localeCompare(b.title, "es"))
 
+const federationDoc = computed(() =>
+  availableDocuments.value.find((entry) => entry.type === PdfType.FEDERATION_APPLICATION)
+)
+
 function buildDownloadName(type: PdfType) {
   return `${type}_${config.public.clubSlug}.pdf`
+}
+
+function onSignupRequestChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  signupRequestFile.value = target.files?.[0] ?? null
+}
+
+function onPaymentProofChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  paymentProofFile.value = target.files?.[0] ?? null
+}
+
+function onFederationRequestChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  federationRequestFile.value = target.files?.[0] ?? null
+}
+
+async function submitMembershipRequest() {
+  if (!signupRequestFile.value || !paymentProofFile.value || isSubmittingMembership.value) return
+
+  formErrorMessage.value = ""
+  formStatusMessage.value = ""
+  isSubmittingMembership.value = true
+
+  try {
+    await sendMembershipRequest(signupRequestFile.value, paymentProofFile.value)
+    formStatusMessage.value = "Solicitud de alta enviada correctamente."
+  } catch {
+    formErrorMessage.value = "No se pudo enviar la solicitud de alta. Intentalo de nuevo."
+  } finally {
+    isSubmittingMembership.value = false
+  }
+}
+
+async function submitFederationRequest() {
+  if (!federationRequestFile.value || isSubmittingFederation.value) return
+
+  formErrorMessage.value = ""
+  formStatusMessage.value = ""
+  isSubmittingFederation.value = true
+
+  try {
+    await sendFederationRequest(federationRequestFile.value)
+    formStatusMessage.value = "Solicitud federativa enviada correctamente."
+  } catch {
+    formErrorMessage.value = "No se pudo enviar la solicitud federativa. Intentalo de nuevo."
+  } finally {
+    isSubmittingFederation.value = false
+  }
 }
 
 async function downloadDocument(type: PdfType) {
@@ -118,13 +184,92 @@ onBeforeUnmount(() => {
   <section class="secretaria-page">
     <header class="page-header">
       <h1>Secretaria</h1>
-
     </header>
+
     <h2 class="section-title">Gestiones</h2>
-    <p class="reminder-text">aqui ira todo el tema de apuntarse al club y federarse</p>
+
+    <section class="management-block">
+      <h3>Apuntarse</h3>
+      <p class="reminder-text">Cuota de inscripcion, nuevo socio: 10 euros</p>
+      <p class="reminder-text">Socio infantil 10-14: 12 euros</p>
+      <p class="reminder-text">Socio juvenil 15-17 anios: 16 euros</p>
+      <p class="reminder-text">Socio adulto 18-75: 20 euros</p>
+
+      <form class="join-form" @submit.prevent>
+        <div class="form-group">
+          <label for="join-name">Nombre</label>
+          <input id="join-name" v-model="joinName" type="text" placeholder="Nombre completo" />
+        </div>
+
+        <div class="form-group">
+          <label for="join-dni">DNI</label>
+          <input id="join-dni" v-model="joinDni" type="text" placeholder="12345678A" />
+        </div>
+
+        <div class="form-group">
+          <label for="signup-request">Solicitud de alta</label>
+          <input id="signup-request" type="file" @change="onSignupRequestChange" />
+          <small v-if="signupRequestFile">{{ signupRequestFile.name }}</small>
+        </div>
+
+        <div class="form-group">
+          <label for="payment-proof">Justificante de pago</label>
+          <input id="payment-proof" type="file" @change="onPaymentProofChange" />
+          <small v-if="paymentProofFile">{{ paymentProofFile.name }}</small>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="download-btn"
+            :disabled="!signupRequestFile || !paymentProofFile || isSubmittingMembership"
+            @click="submitMembershipRequest"
+          >
+            {{ isSubmittingMembership ? "Enviando..." : "Enviar alta" }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="management-block">
+      <h3>Federarse</h3>
+      <p class="reminder-text">Adjunta la solicitud federativa para tramitar la federacion.</p>
+
+      <form class="join-form" @submit.prevent>
+        <div class="form-group">
+          <label for="federate-name">Nombre</label>
+          <input id="federate-name" v-model="federateName" type="text" placeholder="Nombre completo" />
+        </div>
+
+        <div class="form-group">
+          <label for="federate-dni">DNI</label>
+          <input id="federate-dni" v-model="federateDni" type="text" placeholder="12345678A" />
+        </div>
+
+        <div class="form-group">
+          <label for="federation-request">Solicitud federativa</label>
+          <input id="federation-request" type="file" @change="onFederationRequestChange" />
+          <small v-if="federationRequestFile">{{ federationRequestFile.name }}</small>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="download-btn"
+            :disabled="!federationRequestFile || isSubmittingFederation"
+            @click="submitFederationRequest"
+          >
+            {{ isSubmittingFederation ? "Enviando..." : "Enviar solicitud federativa" }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <p v-if="formStatusMessage" class="success-message">{{ formStatusMessage }}</p>
+    <p v-if="formErrorMessage" class="error-message">{{ formErrorMessage }}</p>
 
     <div>
-      <h2  class="section-title">Documentos del club</h2>
+      <h2 class="section-title">Documentos del club</h2>
       <p>Descarga aqui la documentacion oficial disponible.</p>
     </div>
 
@@ -162,24 +307,69 @@ onBeforeUnmount(() => {
   color: var(--color-primary);
 }
 
-.reminder-text {
-  margin: 0.5rem 0 0;
-  color: var(--color-text);
-}
-
 .section-title {
   margin: 0;
   color: var(--color-primary);
   font-size: 1.25rem;
 }
 
-.documents-section-header h2 {
-  margin: 0;
+.management-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  padding: 1rem;
+  display: grid;
+  gap: 0.35rem;
 }
 
-.documents-section-header p {
-  margin: 0.4rem 0 0;
+.management-block h3 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.reminder-text {
+  margin: 0.2rem 0 0;
   color: var(--color-text);
+}
+
+.join-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.form-group input {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+}
+
+.form-group small {
+  color: var(--color-text-secondary);
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.success-message {
+  margin: 0;
+  color: #047857;
 }
 
 .error-message {
@@ -235,6 +425,10 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  .join-form {
+    grid-template-columns: 1fr;
+  }
+
   .documents-grid {
     grid-template-columns: 1fr;
   }
