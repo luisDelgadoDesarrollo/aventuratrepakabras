@@ -16,7 +16,7 @@ export interface ClubUserDto {
 export interface CreateClubUserDto {
   nif: string
   name: string
-  surname: string
+  surname?: string
   email: string
   birthDate: string
   address: string

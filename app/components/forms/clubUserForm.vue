@@ -33,6 +33,7 @@ const form = reactive<CreateClubUserDto>({
 })
 
 const isSubmitting = ref(false)
+const submitError = ref("")
 const isEditMode = computed(() => props.mode === "edit")
 const isOpen = computed({
   get: () => props.modelValue,
@@ -71,15 +72,30 @@ function close() {
   emit("update:modelValue", false)
 }
 
+function parseErrorMessage(error: unknown) {
+  const fallback = "No se pudo guardar el usuario."
+  if (!error || typeof error !== "object") return fallback
+
+  const err = error as {
+    data?: { message?: string }
+    message?: string
+  }
+
+  const backendMessage = err.data?.message?.trim()
+  if (backendMessage) return backendMessage
+  if (err.message?.trim()) return err.message.trim()
+  return fallback
+}
+
 async function handleSave() {
   if (isSubmitting.value) return
+  submitError.value = ""
   isSubmitting.value = true
 
   try {
     const payload: CreateClubUserDto = {
       nif: form.nif.trim(),
       name: form.name.trim(),
-      surname: form.surname.trim(),
       email: form.email.trim(),
       birthDate: form.birthDate,
       address: form.address.trim(),
@@ -88,6 +104,10 @@ async function handleSave() {
       postalCode: form.postalCode.trim(),
       phone: form.phone.trim(),
       homePhone: form.homePhone.trim()
+    }
+    const cleanSurname = form.surname.trim()
+    if (cleanSurname) {
+      payload.surname = cleanSurname
     }
 
     if (isEditMode.value && props.user) {
@@ -100,6 +120,12 @@ async function handleSave() {
     resetForm()
     emit("saved")
   } catch (error) {
+    const errorMessage = parseErrorMessage(error)
+    if (!isEditMode.value && errorMessage.includes("ya existe")) {
+      submitError.value = "Email ya registrado."
+    } else {
+      submitError.value = errorMessage
+    }
     console.error("Error guardando usuario:", error)
   } finally {
     isSubmitting.value = false
@@ -110,6 +136,7 @@ watch(
   () => props.modelValue,
   (value) => {
     if (value) {
+      submitError.value = ""
       if (isEditMode.value && props.user) {
         setFormFromUser(props.user)
       } else {
@@ -118,6 +145,7 @@ watch(
     }
 
     if (!value) {
+      submitError.value = ""
       resetForm()
     }
   }
@@ -139,7 +167,7 @@ watch(
 
         <div class="admin-form-group">
           <label for="user-surname">Apellidos</label>
-          <input id="user-surname" v-model="form.surname" type="text" required />
+          <input id="user-surname" v-model="form.surname" type="text" />
         </div>
       </div>
 
@@ -206,6 +234,10 @@ watch(
           Cancelar
         </button>
       </div>
+
+      <p v-if="submitError" class="form-error">
+        {{ submitError }}
+      </p>
     </form>
   </BaseDialog>
 </template>
@@ -213,5 +245,10 @@ watch(
 <style scoped>
 .user-form {
   gap: 1rem;
+}
+
+.form-error {
+  color: #b91c1c;
+  margin: 0;
 }
 </style>

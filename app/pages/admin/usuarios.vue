@@ -16,10 +16,20 @@ const editUser = ref<ClubUserDto | null>(null)
 const createModal = ref(false)
 const isLoadingEdit = ref(false)
 
-const { data, refresh } = await useAsyncData<PageResponse<ClubUserDto>>(
+const { data, error, refresh } = await useAsyncData<PageResponse<ClubUserDto>>(
   "club-users",
   () => getClubUsers(currentPage.value, pageSize.value),
-  { watch: [currentPage] }
+  {
+    watch: [currentPage],
+    server: false,
+    default: () => ({
+      content: [],
+      totalElements: 0,
+      totalPages: 1,
+      number: 0,
+      size: pageSize.value
+    })
+  }
 )
 
 function openCreate() {
@@ -65,6 +75,10 @@ function getUserTableId(item: ClubUserDto) {
       </button>
     </div>
   </div>
+
+  <p v-if="error" class="users-error">
+    No se pudo cargar la lista de usuarios.
+  </p>
 
   <div v-if="data" class="table-wrapper">
     <table class="admin-table">
@@ -126,3 +140,9 @@ function getUserTableId(item: ClubUserDto) {
     @saved="handleSaved"
   />
 </template>
+
+<style scoped>
+.users-error {
+  color: #b91c1c;
+}
+</style>

@@ -7,7 +7,7 @@ export const getClubUsers = (page: number, size: number) => {
   const config = useRuntimeConfig()
 
   return apiFetch<PageResponse<ClubUserDto>>(
-    `/clubs/${config.public.clubSlug}/users?page=${page}&size=${size}`
+    `/clubs/${config.public.clubSlug}/users?page=${page}&size=${size}&sort=createdAt,desc`
   )
 }
 
