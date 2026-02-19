@@ -93,10 +93,6 @@ watch(
       {{ article.description || "Sin descripcion" }}
     </p>
 
-    <div class="card-meta">
-      <span>Variantes: {{ article.variants?.length || 0 }}</span>
-      <span>Imagenes: {{ article.imagePath?.length || 0 }}</span>
-    </div>
 
     <ImageGallery :images="article.imagePath || []" />
 
