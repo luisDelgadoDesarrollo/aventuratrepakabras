@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { sendFederationRequest, sendMembershipRequest } from "~/composables/api/contactApi"
 import { getDoc } from "~/composables/api/docApi"
 import { PdfType } from "~/types/pdf"
+import { useClubIban } from "~/composables/state/useClubIban"
 
 interface DocumentCardItem {
   type: PdfType
@@ -33,6 +34,7 @@ const isSubmittingMembership = ref(false)
 const isSubmittingFederation = ref(false)
 const formStatusMessage = ref("")
 const formErrorMessage = ref("")
+const { iban: clubIban, isLoading: isLoadingIban } = useClubIban()
 
 const documents: DocumentCardItem[] = [
   {
@@ -190,6 +192,9 @@ onBeforeUnmount(() => {
 
     <section class="management-block">
       <h3>Apuntarse</h3>
+      <p class="reminder-text">
+        Debes enviar el documento de alta de socios disponible mas abajo y adjuntar un justificante de pago con las cuotas indicadas al IBAN indicado.
+      </p>
       <p class="reminder-text">Cuota de inscripcion, nuevo socio: 10 euros</p>
       <p class="reminder-text">Socio infantil 10-14: 12 euros</p>
       <p class="reminder-text">Socio juvenil 15-17 anios: 16 euros</p>
@@ -216,6 +221,16 @@ onBeforeUnmount(() => {
           <label for="payment-proof">Justificante de pago</label>
           <input id="payment-proof" type="file" @change="onPaymentProofChange" />
           <small v-if="paymentProofFile">{{ paymentProofFile.name }}</small>
+        </div>
+
+        <div class="form-group">
+          <label for="membership-iban">IBAN</label>
+          <input
+            id="membership-iban"
+            :value="clubIban || (isLoadingIban ? 'Cargando...' : 'No disponible')"
+            type="text"
+            readonly
+          />
         </div>
 
         <div class="form-actions">

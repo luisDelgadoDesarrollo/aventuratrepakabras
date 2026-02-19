@@ -3,6 +3,7 @@ import { computed, reactive, ref, watch } from "vue"
 import BaseDialog from "~/components/BaseDialog.vue"
 import { sendActivityRegistration } from "~/composables/api/contactApi"
 import type { ActivityRegistrationRequestDto } from "~/types/contact"
+import { useClubIban } from "~/composables/state/useClubIban"
 
 const props = withDefaults(defineProps<{
   modelValue: boolean
@@ -30,6 +31,7 @@ const receipt = ref<File | null>(null)
 const isSubmitting = ref(false)
 const submitError = ref("")
 const submitSuccess = ref("")
+const { iban: clubIban, isLoading: isLoadingIban } = useClubIban()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -127,6 +129,9 @@ watch(
     <div class="signup-dialog-header">
       <h2>Apuntarse a la actividad</h2>
       <p v-if="activityTitle" class="signup-subtitle">{{ activityTitle }}</p>
+      <p class="signup-help">
+        Rellena todos los campos y envia el justificante de pago al IBAN indicado.
+      </p>
     </div>
 
     <form class="signup-form" @submit.prevent="handleSubmit">
@@ -165,6 +170,16 @@ watch(
         <small>{{ receipt?.name ?? "Ningun archivo seleccionado" }}</small>
       </div>
 
+      <div class="form-group">
+        <label for="activity-signup-iban">IBAN</label>
+        <input
+          id="activity-signup-iban"
+          :value="clubIban || (isLoadingIban ? 'Cargando...' : 'No disponible')"
+          type="text"
+          readonly
+        />
+      </div>
+
       <p v-if="submitError" class="status error">{{ submitError }}</p>
       <p v-if="submitSuccess" class="status success">{{ submitSuccess }}</p>
 
@@ -192,6 +207,11 @@ watch(
 .signup-subtitle {
   margin: 0.35rem 0 0;
   color: var(--color-text-secondary);
+}
+
+.signup-help {
+  margin: 0.5rem 0 0;
+  color: var(--color-text);
 }
 
 .signup-form {
