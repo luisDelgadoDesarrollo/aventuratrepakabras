@@ -7,6 +7,7 @@ import { createPublication, updatePublication } from "~/composables/api/publicat
 import type { CreatePublicationRequestDto, LinkRequestDto, PublicationResponseDto } from "~/types/publications"
 import { bumpImagesVersion, getImageUrl } from "~/composables/api/imgApi"
 import type { ImageFormItem } from "~/types/forms"
+import { buildImagePayload, createEmptyImageItem, createExistingImageItem } from "~/composables/forms/imageMultipart"
 
 const props = withDefaults(defineProps<{
   modelValue: boolean
@@ -54,14 +55,7 @@ function setFormFromPublication(publication: PublicationResponseDto) {
 
   createForm.images.splice(0)
   publication.imagesPath.forEach((imagePath, index) => {
-    createForm.images.push({
-      clientId: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
-      image: `image-${index + 1}`,
-      description: "",
-      file: null,
-      existing: true,
-      sourcePath: imagePath
-    })
+    createForm.images.push(createExistingImageItem(imagePath, index))
   })
 
   createForm.links.splice(0)
@@ -73,13 +67,6 @@ function setFormFromPublication(publication: PublicationResponseDto) {
   })
 }
 
-function getFileExtension(path: string) {
-  const cleanPath = path.split("?")[0]
-  const lastDotIndex = cleanPath.lastIndexOf(".")
-  if (lastDotIndex === -1) return ""
-  return cleanPath.slice(lastDotIndex)
-}
-
 function close() {
   emit("update:modelValue", false)
 }
@@ -89,56 +76,23 @@ async function handleCreate() {
   isSubmitting.value = true
 
   try {
-    const orderedImages = createForm.images.filter((item) => item.existing || item.file)
-    const imagesPayload = orderedImages.map((item, index) => ({
-      image: `image-${index + 1}`,
-      description: item.description
-    }))
-
-    const fileEntries = await Promise.all(
-      orderedImages.map(async (item, index) => {
-        const imageName = `image-${index + 1}`
-
-        if (item.file) {
-          return [imageName, item.file] as const
-        }
-
-        if (item.existing && item.sourcePath) {
-          const response = await fetch(getImageUrl(item.sourcePath), { cache: "no-store" })
-          if (!response.ok) {
-            throw new Error(`No se pudo recuperar la imagen existente ${imageName}`)
-          }
-
-          const blob = await response.blob()
-          const extension = getFileExtension(item.sourcePath)
-          const file = new File([blob], `${imageName}${extension}`, {
-            type: blob.type || "application/octet-stream"
-          })
-
-          return [imageName, file] as const
-        }
-
-        return null
-      })
+    const { payload, files } = await buildImagePayload(
+      createForm.images,
+      (index) => `image-${index + 1}`,
+      getImageUrl
     )
-
-    const filesPayload: Record<string, File> = {}
-    fileEntries.forEach((entry) => {
-      if (!entry) return
-      filesPayload[entry[0]] = entry[1]
-    })
 
     const request: CreatePublicationRequestDto = {
       title: createForm.title,
       text: createForm.text,
-      images: imagesPayload,
+      images: payload,
       links: createForm.links.filter((link) => link.title || link.link)
     }
 
     if (isEditMode.value && props.publication) {
-      await updatePublication(props.publication.slug, request, filesPayload)
+      await updatePublication(props.publication.slug, request, files)
     } else {
-      await createPublication(request, filesPayload)
+      await createPublication(request, files)
     }
 
     bumpImagesVersion()
@@ -160,14 +114,7 @@ watch(
         setFormFromPublication(props.publication)
       } else {
         resetForm()
-        createForm.images = [{
-          clientId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          image: "image-1",
-          description: "",
-          file: null,
-          existing: false,
-          sourcePath: null
-        }]
+        createForm.images = [createEmptyImageItem()]
       }
     }
 

@@ -1,24 +1,50 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import {login} from "~/composables/api/authApi";
-import {useAuth} from "~/composables/utils/auth";
+import { ref } from "vue"
+import { login } from "~/composables/api/authApi"
+import { useAuth } from "~/composables/utils/auth"
 
 const isOpen = ref(false)
 const isMenuOpen = ref(false)
-
 const email = ref("")
 const password = ref("")
 const loginError = ref("")
-const { setToken,accessToken } = useAuth()
 
+const { setToken, accessToken } = useAuth()
 
-async function handleOpenLogin(){
-  if(accessToken.value){
+const navLinks = [
+  {
+    to: "/blog",
+    label: "Blog",
+    title: "Enterate de las ultimas noticias y publicaciones del club"
+  },
+  {
+    to: "/actividades",
+    label: "Actividades",
+    title: "Consulta actividades futuras y revisa las actividades ya realizadas"
+  },
+  {
+    to: "/articulos",
+    label: "Tienda",
+    title: "Descubre la tienda del club"
+  },
+  {
+    to: "/secretaria",
+    label: "Secretaria",
+    title: "Informacion sobre altas, federaciones y tramites"
+  },
+  {
+    to: "/contacto",
+    label: "Contacto",
+    title: "Contacta con el club para resolver cualquier duda"
+  }
+]
+
+async function handleOpenLogin() {
+  if (accessToken.value) {
     await navigateTo("/admin")
+    return
   }
-  else {
-    isOpen.value = true
-  }
+  isOpen.value = true
 }
 
 async function handleLogin() {
@@ -30,45 +56,54 @@ async function handleLogin() {
     })
 
     setToken(token.accessToken)
-
     isOpen.value = false
     await navigateTo("/admin")
-
   } catch (error: any) {
     if (error?.response?.status === 401) {
-      loginError.value = "Usuario o contraseña incorrectos"
+      loginError.value = "Usuario o contrasena incorrectos"
     } else {
       loginError.value = "Ha ocurrido un error inesperado"
     }
   }
 }
+
+function closeMenu() {
+  isMenuOpen.value = false
+}
 </script>
+
 <template>
   <div class="layout">
     <header class="header">
       <div class="container header-inner">
+        <button class="menu-toggle" @click="isMenuOpen = !isMenuOpen" aria-label="Abrir menu">
+          &#9776;
+        </button>
+
         <NuxtLink to="/" class="brand">
           <img src="/logo.png" alt="Logo" class="brand-logo" />
           <span class="brand-name">AventuraTrepakabras</span>
         </NuxtLink>
 
-        <!-- Botón hamburguesa solo móvil -->
-        <button class="menu-toggle" @click="isMenuOpen = !isMenuOpen">
-          ☰
-        </button>
+        <nav :class="['nav', { open: isMenuOpen }]">
+          <NuxtLink
+            v-for="link in navLinks"
+            :key="link.to"
+            :to="link.to"
+            :title="link.title"
+            @click="closeMenu"
+          >
+            {{ link.label }}
+          </NuxtLink>
 
-        <nav  :class="['nav', { open: isMenuOpen }]">
-          <NuxtLink to="/blog" title="Enterate de las ultimas noticias y publicaciones del club!">Blog</NuxtLink>
-          <NuxtLink to="/actividades" title="¿Aun no te has apuntado a nuestras actividades? Entra y elige cual sera tu sigiente a ventura o disfruta de las actividades ya realizadas">Actividades</NuxtLink>
-          <NuxtLink to="/articulos" title="¿Aun no tienes tu trepaKamiseta? ¿A que estas esperando?">Tienda</NuxtLink>
-          <NuxtLink to="/secretaria" title="Enterate de como unirte a nuestro club, federarte o cualquier gestion que necesites">Secretaria</NuxtLink>
-          <NuxtLink to="/contacto" title="¿Tienes cualquier duda sobre el club y como funciona? Preguntanos aqui">Contacto</NuxtLink>
-          <button v-if="isMenuOpen" class="close-menu" @click="isMenuOpen = false">✕</button>
+          <button v-if="isMenuOpen" class="close-menu" @click="closeMenu" aria-label="Cerrar menu">
+            &times;
+          </button>
         </nav>
 
         <div class="login-wrapper">
           <button class="login-button" @click="handleOpenLogin">
-            👤
+            Acceder
           </button>
         </div>
       </div>
@@ -79,12 +114,15 @@ async function handleLogin() {
         <h2>Acceder</h2>
 
         <form class="modal-form" @submit.prevent="handleLogin">
-          <input v-model="email" type="email" placeholder="Email" />
-          <input v-model="password" type="password" placeholder="Contraseña" />
-
-          <button type="submit" class="primary-btn">Iniciar sesión</button>
+          <input v-model="email" type="email" placeholder="Email" autocomplete="email" />
+          <input v-model="password" type="password" placeholder="Contrasena" autocomplete="current-password" />
+          <button type="submit" class="primary-btn">Iniciar sesion</button>
         </form>
-        <button class="close-btn" @click="isOpen = false">✕</button>
+
+        <button class="close-btn" @click="isOpen = false" aria-label="Cerrar">
+          &times;
+        </button>
+
         <p v-if="loginError" class="error-message">
           {{ loginError }}
         </p>
@@ -97,7 +135,7 @@ async function handleLogin() {
 
     <footer class="footer">
       <div class="container">
-        © {{ new Date().getFullYear() }} AventuraTrepakabras
+        &copy; {{ new Date().getFullYear() }} AventuraTrepakabras
       </div>
     </footer>
   </div>
@@ -108,19 +146,15 @@ async function handleLogin() {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-
   background:
-      linear-gradient(var(--layout-overlay), var(--layout-overlay)),
-      var(--layout-background);
-
+    linear-gradient(var(--layout-overlay), var(--layout-overlay)),
+    var(--layout-background);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
-
   color: var(--color-text);
 }
-
 
 .container {
   width: 100%;
@@ -141,28 +175,6 @@ async function handleLogin() {
   padding: 3rem 0;
 }
 
-.nav a {
-  margin-left: 1.5rem;
-  color: white;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.nav a.router-link-active {
-  text-decoration: underline;
-}
-
-.main {
-  flex: 1;
-  padding: 2rem 0;
-}
-
-.footer {
-  background: var(--color-secondary);
-  color: white;
-  padding: 1.5rem 0;
-  margin-top: auto;
-}
 .brand {
   display: flex;
   align-items: center;
@@ -181,16 +193,37 @@ async function handleLogin() {
   font-weight: 600;
 }
 
-.layout-name {
-  font-size: 1.25rem;
-  font-weight: 100;
+.nav a {
+  margin-left: 1.5rem;
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
 }
+
+.nav a.router-link-active {
+  text-decoration: underline;
+}
+
 .login-button {
   background: transparent;
-  border: none;
-  font-size: 1.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  padding: 0.45rem 0.75rem;
   cursor: pointer;
   color: white;
+}
+
+.main {
+  flex: 1;
+  padding: 2rem 0;
+}
+
+.footer {
+  background: var(--color-secondary);
+  color: white;
+  padding: 1.5rem 0;
+  margin-top: auto;
 }
 
 .modal-overlay {
@@ -237,11 +270,6 @@ async function handleLogin() {
   cursor: pointer;
 }
 
-.register-link {
-  margin-top: 1rem;
-  font-size: 0.9rem;
-}
-
 .close-btn {
   position: absolute;
   top: 10px;
@@ -250,6 +278,11 @@ async function handleLogin() {
   background: transparent;
   cursor: pointer;
   font-size: 1.2rem;
+}
+
+.error-message {
+  margin-top: 0.75rem;
+  color: #b91c1c;
 }
 
 body {
@@ -265,68 +298,6 @@ body {
   cursor: pointer;
 }
 
-@media (max-width: 768px) {
-
-  .menu-toggle {
-    display: block;
-    z-index: 3000; /* que quede por encima */
-  }
-
-  /* NAV como menú lateral izquierdo */
-  .nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 80%;               /* 👈 no ocupa todo */
-    max-width: 320px;         /* 👈 nunca más grande */
-    height: 100vh;
-    background: var(--color-primary);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;  /* 👈 alineado a la izquierda */
-    padding-left: 2rem;
-    gap: 2rem;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    z-index: 2000;
-    overflow-y: auto;         /* 👈 evita que se salga */
-  }
-
-  .nav.open {
-    transform: translateX(0);
-  }
-
-  .nav a {
-    font-size: 1.3rem;
-    color: white;
-    margin: 0;
-  }
-
-  .close-menu {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-  }
-}
-@media (max-width: 768px) {
-
-  .header-inner {
-    position: relative;
-  }
-
-  /* Cambiamos orden visual */
-  .menu-toggle {
-    order: -1;          /* 👈 lo mueve a la izquierda */
-    margin-right: 1rem;
-  }
-
-  .brand {
-    margin-left: 0;
-  }
-
-}
-
 .close-menu {
   position: absolute;
   top: 20px;
@@ -338,10 +309,46 @@ body {
   cursor: pointer;
 }
 
-.tooltip {
-  background: var(--color-accent);
-  color: var(--color-text);
+@media (max-width: 768px) {
+  .header-inner {
+    position: relative;
+  }
+
+  .menu-toggle {
+    display: block;
+    order: -1;
+    margin-right: 1rem;
+    z-index: 3000;
+  }
+
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80%;
+    max-width: 320px;
+    height: 100vh;
+    background: var(--color-primary);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding-left: 2rem;
+    gap: 2rem;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 2000;
+    overflow-y: auto;
+  }
+
+  .nav.open {
+    transform: translateX(0);
+  }
+
+  .nav a {
+    font-size: 1.3rem;
+    color: white;
+    margin: 0;
+  }
 }
-
-
 </style>

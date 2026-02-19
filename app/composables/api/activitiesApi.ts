@@ -1,6 +1,5 @@
-import { apiFetch } from "~/composables/api/apiClient"
+import { apiFetch, apiFetchAuth, clubPath } from "~/composables/api/apiClient"
 import { appendFilesPart, appendJsonPart, type MultipartFiles } from "~/composables/api/multipart"
-import { useAuth } from "~/composables/utils/auth"
 import type { ActivityResponseDto } from "~/types/activities"
 
 export interface ActivityUpsertResponseDto {
@@ -19,19 +18,11 @@ const buildActivityFormData = (
 }
 
 export const getLastActivity = () => {
-  const config = useRuntimeConfig()
-
-  return apiFetch<ActivityResponseDto>(
-    `/clubs/${config.public.clubSlug}/activities/last`
-  )
+  return apiFetch<ActivityResponseDto>(clubPath("/activities/last"))
 }
 
 export const getActivity = (activityId: number | string) => {
-  const config = useRuntimeConfig()
-
-  return apiFetch<ActivityResponseDto>(
-    `/clubs/${config.public.clubSlug}/activities/${activityId}`
-  )
+  return apiFetch<ActivityResponseDto>(clubPath(`/activities/${activityId}`))
 }
 
 export const getActivities = (params?: {
@@ -39,7 +30,6 @@ export const getActivities = (params?: {
   size?: number
   sort?: string
 }) => {
-  const config = useRuntimeConfig()
   const query = new URLSearchParams()
 
   if (typeof params?.page === "number") query.set("page", String(params.page))
@@ -48,44 +38,28 @@ export const getActivities = (params?: {
 
   const suffix = query.toString() ? `?${query.toString()}` : ""
 
-  return apiFetch<ActivityResponseDto[]>(
-    `/clubs/${config.public.clubSlug}/activities${suffix}`
-  )
+  return apiFetch<ActivityResponseDto[]>(clubPath(`/activities${suffix}`))
 }
 
 export const getActivityYears = () => {
-  const config = useRuntimeConfig()
-
-  return apiFetch<number[]>(
-    `/clubs/${config.public.clubSlug}/activities/years`
-  )
+  return apiFetch<number[]>(clubPath("/activities/years"))
 }
 
 export const getActivitiesByYear = (year: number | string) => {
-  const config = useRuntimeConfig()
-
-  return apiFetch<ActivityResponseDto[]>(
-    `/clubs/${config.public.clubSlug}/activities/years/${year}`
-  )
+  return apiFetch<ActivityResponseDto[]>(clubPath(`/activities/years/${year}`))
 }
 
 export const createActivity = async (
   activity: Record<string, unknown>,
   files: MultipartFiles = {}
 ) => {
-  const config = useRuntimeConfig()
-  const { accessToken } = useAuth()
   const formData = buildActivityFormData(activity, files)
 
-  return await $fetch<ActivityUpsertResponseDto>(
-    `${config.public.apiBase}/clubs/${config.public.clubSlug}/activities`,
+  return await apiFetchAuth<ActivityUpsertResponseDto>(
+    clubPath("/activities"),
     {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken.value}`
-      },
-      body: formData,
-      credentials: "include"
+      body: formData
     }
   )
 }
@@ -95,35 +69,22 @@ export const updateActivity = async (
   activity: Record<string, unknown>,
   files: MultipartFiles = {}
 ) => {
-  const config = useRuntimeConfig()
-  const { accessToken } = useAuth()
   const formData = buildActivityFormData(activity, files)
 
-  return await $fetch<ActivityUpsertResponseDto>(
-    `${config.public.apiBase}/clubs/${config.public.clubSlug}/activities/${activityId}`,
+  return await apiFetchAuth<ActivityUpsertResponseDto>(
+    clubPath(`/activities/${activityId}`),
     {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${accessToken.value}`
-      },
-      body: formData,
-      credentials: "include"
+      body: formData
     }
   )
 }
 
 export const deleteActivity = async (activityId: number | string) => {
-  const config = useRuntimeConfig()
-  const { accessToken } = useAuth()
-
-  return await $fetch<void>(
-    `${config.public.apiBase}/clubs/${config.public.clubSlug}/activities/${activityId}`,
+  return await apiFetchAuth<void>(
+    clubPath(`/activities/${activityId}`),
     {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${accessToken.value}`
-      },
-      credentials: "include"
+      method: "DELETE"
     }
   )
 }

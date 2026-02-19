@@ -2,10 +2,15 @@
 import { formatDate } from "compatx"
 import { getActivity } from "~/composables/api/activitiesApi"
 import type { ActivityResponseDto } from "~/types/activities"
+import ActivityRegistrationForm from "~/components/forms/ActivityRegistrationForm.vue"
 
 const route = useRoute()
+const config = useRuntimeConfig()
+const signupModal = ref(false)
+const signupStatus = ref("")
 
 const activitySlug = computed(() => String(route.params.activitySlug ?? ""))
+const clubSlug = computed(() => String(config.public.clubSlug ?? ""))
 
 const { data: activity, pending, error } = await useAsyncData<ActivityResponseDto>(
   () => `activity-${activitySlug.value}`,
@@ -24,6 +29,15 @@ const canSignUp = computed(() => {
   if (!start) return false
   return start.getTime() > Date.now()
 })
+
+function openSignupModal() {
+  signupStatus.value = ""
+  signupModal.value = true
+}
+
+function onSignupSubmitted() {
+  signupStatus.value = "Tu solicitud se ha enviado. Revisa tu email por si te contactamos."
+}
 </script>
 
 <template>
@@ -59,8 +73,25 @@ const canSignUp = computed(() => {
         <ImageGallery :images="activity.imagesPath" />
       </div>
 
-      <button v-if="canSignUp" type="button" class="signup-btn">Apuntarse a la actividad</button>
+      <p v-if="signupStatus" class="signup-success">{{ signupStatus }}</p>
+
+      <button
+        v-if="canSignUp"
+        type="button"
+        class="signup-btn"
+        @click="openSignupModal"
+      >
+        Apuntarse a la actividad
+      </button>
     </article>
+
+    <ActivityRegistrationForm
+      v-model="signupModal"
+      :club-slug="clubSlug"
+      :activity-slug="activitySlug"
+      :activity-title="activity?.title"
+      @submitted="onSignupSubmitted"
+    />
   </section>
 </template>
 
@@ -140,6 +171,12 @@ const canSignUp = computed(() => {
   color: #fff;
   font-weight: 600;
   cursor: pointer;
+}
+
+.signup-success {
+  margin: 0;
+  color: #047857;
+  font-weight: 600;
 }
 
 @media (max-width: 768px) {

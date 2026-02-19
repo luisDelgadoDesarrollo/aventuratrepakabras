@@ -1,14 +1,10 @@
-import type {ImageRequestDto} from "~/types/images";
-import type {UsResponseDto} from "~/types/club";
-import {apiFetch} from "~/composables/api/apiClient";
-import {appendFilesPart, appendJsonPart, type MultipartFiles} from "~/composables/api/multipart";
-import {useAuth} from "~/composables/utils/auth";
-export const getUs = () =>
-{
-    const config = useRuntimeConfig()
-    return apiFetch<UsResponseDto>(
-        `/clubs/${config.public.clubSlug}/us`
-    )
+import type { ImageRequestDto } from "~/types/images"
+import type { UsResponseDto } from "~/types/club"
+import { apiFetch, apiFetchAuth, clubPath } from "~/composables/api/apiClient"
+import { appendFilesPart, appendJsonPart, type MultipartFiles } from "~/composables/api/multipart"
+
+export const getUs = () => {
+  return apiFetch<UsResponseDto>(clubPath("/us"))
 }
 
 export interface UsRequestDto {
@@ -17,46 +13,40 @@ export interface UsRequestDto {
 }
 
 const buildUsFormData = (
-    request: UsRequestDto,
-    files: MultipartFiles = {}
+  request: UsRequestDto,
+  files: MultipartFiles = {}
 ) => {
-    const formData = new FormData()
+  const formData = new FormData()
 
-    appendJsonPart(formData, "us", request)
-    appendFilesPart(formData, files, "files")
+  appendJsonPart(formData, "us", request)
+  appendFilesPart(formData, files, "files")
 
-    return formData
+  return formData
 }
 
 const sendUsForm = async (
-    method: "POST" | "PUT",
-    request: UsRequestDto,
-    files: MultipartFiles = {}
+  method: "POST" | "PUT",
+  request: UsRequestDto,
+  files: MultipartFiles = {}
 ) => {
-    const config = useRuntimeConfig()
-    const { accessToken } = useAuth()
-    const formData = buildUsFormData(request, files)
+  const formData = buildUsFormData(request, files)
 
-    return await $fetch(`${config.public.apiBase}/clubs/${config.public.clubSlug}/us`, {
-        method,
-        headers: {
-            Authorization: `Bearer ${accessToken.value}`
-        },
-        body: formData,
-        credentials: "include"
-    })
+  return await apiFetchAuth<void>(clubPath("/us"), {
+    method,
+    body: formData
+  })
 }
 
 export const createUs = async (
-    request: UsRequestDto,
-    files: MultipartFiles = {}
+  request: UsRequestDto,
+  files: MultipartFiles = {}
 ) => {
-    return await sendUsForm("POST", request, files)
+  return await sendUsForm("POST", request, files)
 }
 
 export const updateUs = async (
-    request: UsRequestDto,
-    files: MultipartFiles = {}
+  request: UsRequestDto,
+  files: MultipartFiles = {}
 ) => {
-    return await sendUsForm("PUT", request, files)
+  return await sendUsForm("PUT", request, files)
 }

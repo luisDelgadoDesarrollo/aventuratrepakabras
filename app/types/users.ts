@@ -1,6 +1,7 @@
 export interface ClubUserDto {
   clubId: number
   nif: string
+  federatedNumber?: string
   name: string
   surname: string
   email: string
@@ -15,6 +16,7 @@ export interface ClubUserDto {
 
 export interface CreateClubUserDto {
   nif: string
+  federatedNumber?: string
   name: string
   surname?: string
   email: string

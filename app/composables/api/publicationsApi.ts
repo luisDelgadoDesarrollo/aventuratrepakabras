@@ -1,95 +1,66 @@
-import type {CreatePublicationRequestDto, PublicationResponseDto} from "~/types/publications";
-import {apiFetch} from "~/composables/api/apiClient";
-import {appendFilesPart, appendJsonPart, type MultipartFiles} from "~/composables/api/multipart";
-import type {PageResponse} from "~/types/page";
-import {useAuth} from "~/composables/utils/auth";
-export const getLastPublication = () =>
-{
-    const config = useRuntimeConfig()
-    return apiFetch<PublicationResponseDto>(
-        `/clubs/${config.public.clubSlug}/publications/last`
-    )
+import type { CreatePublicationRequestDto, PublicationResponseDto } from "~/types/publications"
+import { apiFetch, apiFetchAuth, clubPath } from "~/composables/api/apiClient"
+import { appendFilesPart, appendJsonPart, type MultipartFiles } from "~/composables/api/multipart"
+import type { PageResponse } from "~/types/page"
+
+export const getLastPublication = () => {
+  return apiFetch<PublicationResponseDto>(clubPath("/publications/last"))
 }
 
 export const getPublications = (page: number, size: number) => {
-    const config = useRuntimeConfig()
-
-    return apiFetch<PageResponse<PublicationResponseDto>>(
-        `/clubs/${config.public.clubSlug}/publications?page=${page}&size=${size}`
-    )
+  return apiFetch<PageResponse<PublicationResponseDto>>(clubPath(`/publications?page=${page}&size=${size}`))
 }
 
 export const getPublication = (publicationSlug: string) => {
-    const config = useRuntimeConfig()
-
-    return apiFetch<PublicationResponseDto>(
-        `/clubs/${config.public.clubSlug}/publications/${publicationSlug}`
-    )
+  return apiFetch<PublicationResponseDto>(clubPath(`/publications/${publicationSlug}`))
 }
 export const deletePublication = async (publicationId: string) => {
-    const config = useRuntimeConfig()
-    const { accessToken } = useAuth()
-
-    return await $fetch(
-        `${config.public.apiBase}/clubs/${config.public.clubSlug}/publications/${publicationId}`,
-        {
-            method: "DELETE",
-            headers: {
-                Authorization: `Bearer ${accessToken.value}`
-            },
-            credentials: "include"
-        }
-    )
+  return await apiFetchAuth<void>(clubPath(`/publications/${publicationId}`), {
+    method: "DELETE"
+  })
 }
 
 const buildPublicationFormData = (
-    request: CreatePublicationRequestDto,
-    files: MultipartFiles = {}
+  request: CreatePublicationRequestDto,
+  files: MultipartFiles = {}
 ) => {
-    const formData = new FormData()
+  const formData = new FormData()
 
-    appendJsonPart(formData, "data", request)
-    appendFilesPart(formData, files, "files")
+  appendJsonPart(formData, "data", request)
+  appendFilesPart(formData, files, "files")
 
-    return formData
+  return formData
 }
 
 const sendPublicationForm = async (
-    url: string,
-    method: "POST" | "PUT",
-    request: CreatePublicationRequestDto,
-    files: MultipartFiles = {}
+  url: string,
+  method: "POST" | "PUT",
+  request: CreatePublicationRequestDto,
+  files: MultipartFiles = {}
 ) => {
-    const { accessToken } = useAuth()
-    const formData = buildPublicationFormData(request, files)
+  const formData = buildPublicationFormData(request, files)
 
-    return await $fetch(url, {
-        method,
-        headers: {
-            Authorization: `Bearer ${accessToken.value}`
-        },
-        body: formData,
-        credentials: "include"
-    })
+  return await apiFetchAuth<void>(url, {
+    method,
+    body: formData
+  })
 }
 
 export const createPublication = async (
-    request: CreatePublicationRequestDto,
-    files: MultipartFiles = {}
+  request: CreatePublicationRequestDto,
+  files: MultipartFiles = {}
 ) => {
-    const config = useRuntimeConfig()
-    const url = `${config.public.apiBase}/clubs/${config.public.clubSlug}/publications`
+  const url = clubPath("/publications")
 
-    return await sendPublicationForm(url, "POST", request, files)
+  return await sendPublicationForm(url, "POST", request, files)
 }
 
 export const updatePublication = async (
-    publicationSlug: string,
-    request: CreatePublicationRequestDto,
-    files: MultipartFiles = {}
+  publicationSlug: string,
+  request: CreatePublicationRequestDto,
+  files: MultipartFiles = {}
 ) => {
-    const config = useRuntimeConfig()
-    const url = `${config.public.apiBase}/clubs/${config.public.clubSlug}/publications/${publicationSlug}`
+  const url = clubPath(`/publications/${publicationSlug}`)
 
-    return await sendPublicationForm(url, "PUT", request, files)
+  return await sendPublicationForm(url, "PUT", request, files)
 }

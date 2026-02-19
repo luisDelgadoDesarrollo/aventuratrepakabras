@@ -6,6 +6,7 @@ import { createActivity, updateActivity } from "~/composables/api/activitiesApi"
 import type { ActivityResponseDto, CreateActivityRequestDto } from "~/types/activities"
 import { bumpImagesVersion, getImageUrl } from "~/composables/api/imgApi"
 import type { ImageFormItem } from "~/types/forms"
+import { buildImagePayload, createEmptyImageItem, createExistingImageItem } from "~/composables/forms/imageMultipart"
 
 const props = withDefaults(defineProps<{
   modelValue: boolean
@@ -97,22 +98,8 @@ function setFormFromActivity(activity: ActivityResponseDto) {
 
   activityForm.images.splice(0)
   activity.imagesPath.forEach((imagePath, index) => {
-    activityForm.images.push({
-      clientId: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
-      image: `image-${index + 1}`,
-      description: "",
-      file: null,
-      existing: true,
-      sourcePath: imagePath
-    })
+    activityForm.images.push(createExistingImageItem(imagePath, index))
   })
-}
-
-function getFileExtension(path: string) {
-  const cleanPath = path.split("?")[0]
-  const lastDotIndex = cleanPath.lastIndexOf(".")
-  if (lastDotIndex === -1) return ""
-  return cleanPath.slice(lastDotIndex)
 }
 
 function close() {
@@ -124,44 +111,11 @@ async function handleSave() {
   isSubmitting.value = true
 
   try {
-    const orderedImages = activityForm.images.filter((item) => item.existing || item.file)
-    const imagesPayload = orderedImages.map((item, index) => ({
-      image: `image-${index + 1}`,
-      description: item.description
-    }))
-
-    const fileEntries = await Promise.all(
-      orderedImages.map(async (item, index) => {
-        const imageName = `image-${index + 1}`
-
-        if (item.file) {
-          return [imageName, item.file] as const
-        }
-
-        if (item.existing && item.sourcePath) {
-          const response = await fetch(getImageUrl(item.sourcePath), { cache: "no-store" })
-          if (!response.ok) {
-            throw new Error(`No se pudo recuperar la imagen existente ${imageName}`)
-          }
-
-          const blob = await response.blob()
-          const extension = getFileExtension(item.sourcePath)
-          const file = new File([blob], `${imageName}${extension}`, {
-            type: blob.type || "application/octet-stream"
-          })
-
-          return [imageName, file] as const
-        }
-
-        return null
-      })
+    const { payload, files } = await buildImagePayload(
+      activityForm.images,
+      (index) => `image-${index + 1}`,
+      getImageUrl
     )
-
-    const filesPayload: Record<string, File> = {}
-    fileEntries.forEach((entry) => {
-      if (!entry) return
-      filesPayload[entry[0]] = entry[1]
-    })
 
     const request: CreateActivityRequestDto = {
       title: activityForm.title,
@@ -170,13 +124,13 @@ async function handleSave() {
       noAffiliatePrice: activityForm.noAffiliatePrice == null ? undefined : Number(activityForm.noAffiliatePrice),
       startDate: mergeDateAndTime(activityForm.startDate, activityForm.startTime),
       endDate: activityForm.endDate ? mergeDateAndTime(activityForm.endDate, activityForm.endTime) : undefined,
-      images: imagesPayload
+      images: payload
     }
 
     if (isEditMode.value && props.activity) {
-      await updateActivity(props.activity.slug, request, filesPayload)
+      await updateActivity(props.activity.slug, request, files)
     } else {
-      await createActivity(request, filesPayload)
+      await createActivity(request, files)
     }
 
     bumpImagesVersion()
@@ -198,14 +152,7 @@ watch(
         setFormFromActivity(props.activity)
       } else {
         resetForm()
-        activityForm.images = [{
-          clientId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          image: "image-1",
-          description: "",
-          file: null,
-          existing: false,
-          sourcePath: null
-        }]
+        activityForm.images = [createEmptyImageItem()]
       }
     }
 

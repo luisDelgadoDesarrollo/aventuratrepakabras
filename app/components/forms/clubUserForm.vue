@@ -20,6 +20,7 @@ const emit = defineEmits<{
 
 const form = reactive<CreateClubUserDto>({
   nif: "",
+  federatedNumber: "",
   name: "",
   surname: "",
   email: "",
@@ -42,6 +43,7 @@ const isOpen = computed({
 
 function resetForm() {
   form.nif = ""
+  form.federatedNumber = ""
   form.name = ""
   form.surname = ""
   form.email = ""
@@ -56,6 +58,7 @@ function resetForm() {
 
 function setFormFromUser(user: ClubUserDto) {
   form.nif = user.nif ?? ""
+  form.federatedNumber = user.federatedNumber ?? ""
   form.name = user.name ?? ""
   form.surname = user.surname ?? ""
   form.email = user.email ?? ""
@@ -104,6 +107,10 @@ async function handleSave() {
       postalCode: form.postalCode.trim(),
       phone: form.phone.trim(),
       homePhone: form.homePhone.trim()
+    }
+    const cleanFederatedNumber = form.federatedNumber?.trim()
+    if (cleanFederatedNumber) {
+      payload.federatedNumber = cleanFederatedNumber
     }
     const cleanSurname = form.surname.trim()
     if (cleanSurname) {
@@ -178,17 +185,24 @@ watch(
         </div>
 
         <div class="admin-form-group">
-          <label for="user-birthdate">Fecha nacimiento</label>
-          <input id="user-birthdate" v-model="form.birthDate" type="date" required />
+          <label for="user-federated-number">Numero federado</label>
+          <input id="user-federated-number" v-model="form.federatedNumber" type="text" />
         </div>
       </div>
 
       <div class="admin-form-row two-columns">
         <div class="admin-form-group">
+          <label for="user-birthdate">Fecha nacimiento</label>
+          <input id="user-birthdate" v-model="form.birthDate" type="date" required />
+        </div>
+
+        <div class="admin-form-group">
           <label for="user-email">Email</label>
           <input id="user-email" v-model="form.email" type="email" required :disabled="isEditMode" />
         </div>
+      </div>
 
+      <div class="admin-form-row two-columns">
         <div class="admin-form-group">
           <label for="user-phone">Telefono</label>
           <input id="user-phone" v-model="form.phone" type="tel" required />

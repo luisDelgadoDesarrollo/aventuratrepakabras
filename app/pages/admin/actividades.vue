@@ -1,44 +1,33 @@
 <script setup lang="ts">
-import { ref } from "vue"
 import { deleteActivity, getActivities, getActivity } from "~/composables/api/activitiesApi"
 import type { ActivityResponseDto } from "~/types/activities"
 import { formatDate } from "compatx"
 import BaseDialog from "~/components/BaseDialog.vue"
 import ActivityCard from "~/components/cards/ActivityCard.vue"
 import ActivityForm from "~/components/forms/activityForm.vue"
+import { useCrudDialogs } from "~/composables/admin/useCrudDialogs"
 
 definePageMeta({
   middleware: "auth"
 })
 
-const selectedActivity = ref<ActivityResponseDto | null>(null)
-const editActivity = ref<ActivityResponseDto | null>(null)
-const viewModal = ref(false)
-const createModal = ref(false)
-const isLoadingEdit = ref(false)
-
-function openView(item: ActivityResponseDto) {
-  selectedActivity.value = item
-  viewModal.value = true
-}
-
-function openCreate() {
-  editActivity.value = null
-  createModal.value = true
-}
-
-async function openEdit(item: ActivityResponseDto) {
-  isLoadingEdit.value = true
-  try {
-    const fullActivity = await getActivity(item.slug)
-    editActivity.value = fullActivity
-    createModal.value = true
-  } catch (error) {
+const {
+  selectedItem: selectedActivity,
+  editItem: editActivity,
+  viewModal,
+  createModal,
+  isLoadingEdit,
+  openView,
+  openCreate,
+  openEdit
+} = useCrudDialogs<ActivityResponseDto>({
+  async loadForEdit(item) {
+    return await getActivity(item.slug)
+  },
+  onEditError(error) {
     console.error("Error cargando actividad completa:", error)
-  } finally {
-    isLoadingEdit.value = false
   }
-}
+})
 
 function handleSaved() {
   refresh()

@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref } from "vue"
 import { deleteClubUser, getClubUsers } from "~/composables/api/usersApi"
 import ClubUserForm from "~/components/forms/clubUserForm.vue"
 import { usePagination } from "~/composables/utils/usePagination"
 import type { ClubUserDto } from "~/types/users"
 import type { PageResponse } from "~/types/page"
+import { useCrudDialogs } from "~/composables/admin/useCrudDialogs"
+import AdminPagination from "~/components/admin/AdminPagination.vue"
 
 definePageMeta({
   middleware: "auth"
@@ -12,9 +13,17 @@ definePageMeta({
 
 const { pageSize, currentPage, next, prev } = usePagination(10)
 
-const editUser = ref<ClubUserDto | null>(null)
-const createModal = ref(false)
-const isLoadingEdit = ref(false)
+const {
+  editItem: editUser,
+  createModal,
+  isLoadingEdit,
+  openCreate,
+  openEdit
+} = useCrudDialogs<ClubUserDto>({
+  cloneForEdit(item) {
+    return { ...item }
+  }
+})
 
 const { data, error, refresh } = await useAsyncData<PageResponse<ClubUserDto>>(
   "club-users",
@@ -31,21 +40,7 @@ const { data, error, refresh } = await useAsyncData<PageResponse<ClubUserDto>>(
     })
   }
 )
-
-function openCreate() {
-  editUser.value = null
-  createModal.value = true
-}
-
-async function openEdit(item: ClubUserDto) {
-  isLoadingEdit.value = true
-  try {
-    editUser.value = { ...item }
-    createModal.value = true
-  } finally {
-    isLoadingEdit.value = false
-  }
-}
+console.log(data)
 
 function handleSaved() {
   refresh()
@@ -88,6 +83,7 @@ function getUserTableId(item: ClubUserDto) {
           <th>Nombre</th>
           <th>Apellidos</th>
           <th>NIF</th>
+          <th>N. federado</th>
           <th>Telefono</th>
           <th>Acciones</th>
         </tr>
@@ -99,6 +95,7 @@ function getUserTableId(item: ClubUserDto) {
           <td>{{ item.name }}</td>
           <td>{{ item.surname }}</td>
           <td>{{ item.nif }}</td>
+          <td>{{ item.federatedNumber || "-" }}</td>
           <td>{{ item.phone }}</td>
 
           <td class="actions-cell">
@@ -118,19 +115,12 @@ function getUserTableId(item: ClubUserDto) {
       </tbody>
     </table>
 
-    <div class="pagination">
-      <button @click="prev()" :disabled="currentPage === 0">
-        <
-      </button>
-
-      <span>
-        Pagina {{ currentPage + 1 }} de {{ data.totalPages }}
-      </span>
-
-      <button @click="next(data.totalPages)" :disabled="currentPage >= data.totalPages - 1">
-        >
-      </button>
-    </div>
+    <AdminPagination
+      :current-page="currentPage"
+      :total-pages="data.totalPages"
+      @prev="prev"
+      @next="next"
+    />
   </div>
 
   <ClubUserForm

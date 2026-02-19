@@ -3,10 +3,10 @@ import { computed, ref } from "vue"
 import BaseDialog from "~/components/BaseDialog.vue"
 import UsForm from "~/components/forms/usForm.vue"
 import { createUs, getUs, updateUs } from "~/composables/api/usApi"
-import type { ImageRequestDto } from "~/types/images"
 import type { UsResponseDto } from "~/types/club"
 import { bumpImagesVersion, getImageUrl } from "~/composables/api/imgApi"
 import type { ImageFormItem } from "~/types/forms"
+import { buildImagePayload, createEmptyImageItem, createExistingImageItem } from "~/composables/forms/imageMultipart"
 
 definePageMeta({
   middleware: "auth"
@@ -34,35 +34,14 @@ const { data: us, pending, error, refresh } = await useAsyncData<UsResponseDto |
 
 const usExists = computed(() => !!us.value)
 
-function getFileExtension(path: string) {
-  const cleanPath = path.split("?")[0]
-  const lastDotIndex = cleanPath.lastIndexOf(".")
-  if (lastDotIndex === -1) return ""
-  return cleanPath.slice(lastDotIndex)
-}
-
 function openForm() {
   formText.value = us.value?.text ?? ""
-  formImages.value = (us.value?.images ?? []).map((imagePath, index) => ({
-    clientId: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
-    image: `image-${index + 1}`,
-    description: "",
-    file: null,
-    existing: true,
-    sourcePath: imagePath
-  }))
+  formImages.value = (us.value?.images ?? []).map((imagePath, index) => createExistingImageItem(imagePath, index))
 
   saveError.value = ""
 
   if (formImages.value.length === 0) {
-    formImages.value = [{
-      clientId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      image: "image-1",
-      description: "",
-      file: null,
-      existing: false,
-      sourcePath: null
-    }]
+    formImages.value = [createEmptyImageItem()]
   }
 
   editModal.value = true
@@ -81,45 +60,11 @@ async function saveUs() {
     return
   }
 
-  const orderedImages = formImages.value.filter((item) => item.existing || item.file)
-
-  const imagesPayload: ImageRequestDto[] = orderedImages.map((item, index) => ({
-    image: `image-${index + 1}`,
-    description: item.description
-  }))
-
-  const fileEntries = await Promise.all(
-    orderedImages.map(async (item, index) => {
-      const imageName = `image-${index + 1}`
-
-      if (item.file) {
-        return [imageName, item.file] as const
-      }
-
-      if (item.existing && item.sourcePath) {
-        const response = await fetch(getImageUrl(item.sourcePath), { cache: "no-store" })
-        if (!response.ok) {
-          throw new Error(`No se pudo recuperar la imagen existente ${imageName}`)
-        }
-
-        const blob = await response.blob()
-        const extension = getFileExtension(item.sourcePath)
-        const file = new File([blob], `${imageName}${extension}`, {
-          type: blob.type || "application/octet-stream"
-        })
-
-        return [imageName, file] as const
-      }
-
-      return null
-    })
+  const { payload, files } = await buildImagePayload(
+    formImages.value,
+    (index) => `image-${index + 1}`,
+    getImageUrl
   )
-
-  const filesPayload: Record<string, File> = {}
-  fileEntries.forEach((entry) => {
-    if (!entry) return
-    filesPayload[entry[0]] = entry[1]
-  })
 
   isSaving.value = true
   saveError.value = ""
@@ -127,13 +72,13 @@ async function saveUs() {
   try {
     const request = {
       text: cleanText,
-      images: imagesPayload
+      images: payload
     }
 
     if (usExists.value) {
-      await updateUs(request, filesPayload)
+      await updateUs(request, files)
     } else {
-      await createUs(request, filesPayload)
+      await createUs(request, files)
     }
 
     bumpImagesVersion()

@@ -6,6 +6,7 @@ import { createArticle, updateArticle } from "~/composables/api/articlesApi"
 import { bumpImagesVersion, getImageUrl } from "~/composables/api/imgApi"
 import type { ImageFormItem } from "~/types/forms"
 import type { ArticleDto, CreateArticleRequestDto, CreateArticleVariantDto, ImageRequestDto } from "~/types/articles"
+import { buildImagePayload as buildMultipartImagePayload, createClientId, createEmptyImageItem, createExistingImageItem } from "~/composables/forms/imageMultipart"
 
 interface ArticleVariantFormItem {
   clientId: string
@@ -48,33 +49,13 @@ const isOpen = computed({
   set: (value) => emit("update:modelValue", value)
 })
 
-function createClientId() {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
-}
-
-function createImageItem(
-  imageName: string,
-  description = "",
-  existing = false,
-  sourcePath: string | null = null
-): ImageFormItem {
-  return {
-    clientId: createClientId(),
-    image: imageName,
-    description,
-    file: null,
-    existing,
-    sourcePath
-  }
-}
-
 function createVariantItem(): ArticleVariantFormItem {
   return {
     clientId: createClientId(),
     size: "",
     color: "",
     stock: null,
-    images: [createImageItem("image-1")]
+    images: [createEmptyImageItem()]
   }
 }
 
@@ -91,7 +72,7 @@ function setFormFromArticle(article: ArticleDto) {
 
   articleForm.images.splice(0)
   ;(article.imagePath ?? []).forEach((imagePath, index) => {
-    articleForm.images.push(createImageItem(`image-${index + 1}`, "", true, imagePath))
+    articleForm.images.push(createExistingImageItem(imagePath, index))
   })
 
   articleForm.variants.splice(0)
@@ -105,24 +86,15 @@ function setFormFromArticle(article: ArticleDto) {
     }
 
     ;(variant.images ?? []).forEach((imagePath, imageIndex) => {
-      variantForm.images.push(
-        createImageItem(`image-${imageIndex + 1}`, "", true, imagePath)
-      )
+      variantForm.images.push(createExistingImageItem(imagePath, imageIndex))
     })
 
     if (variantForm.images.length === 0) {
-      variantForm.images.push(createImageItem(`image-${variantIndex + 1}`))
+      variantForm.images.push(createEmptyImageItem(variantIndex + 1))
     }
 
     articleForm.variants.push(variantForm)
   })
-}
-
-function getFileExtension(path: string) {
-  const cleanPath = path.split("?")[0]
-  const lastDotIndex = cleanPath.lastIndexOf(".")
-  if (lastDotIndex === -1) return ""
-  return cleanPath.slice(lastDotIndex)
 }
 
 function close() {
@@ -144,39 +116,20 @@ async function buildImagePayload(
   keyPrefix: string,
   filesPayload: Record<string, File>
 ): Promise<ImageRequestDto[]> {
-  const orderedItems = items.filter((item) => item.existing || item.file)
-
-  const payload: ImageRequestDto[] = []
-
-  for (let index = 0; index < orderedItems.length; index += 1) {
-    const item = orderedItems[index]
-    const imageKey = `${keyPrefix}-image-${index + 1}`
-
-    payload.push({
-      image: imageKey,
-      description: item.description || undefined
-    })
-
-    if (item.file) {
-      filesPayload[imageKey] = item.file
-      continue
-    }
-
-    if (item.existing && item.sourcePath) {
-      const response = await fetch(getImageUrl(item.sourcePath), { cache: "no-store" })
-      if (!response.ok) {
-        throw new Error(`No se pudo recuperar la imagen existente ${imageKey}`)
-      }
-
-      const blob = await response.blob()
-      const extension = getFileExtension(item.sourcePath)
-      filesPayload[imageKey] = new File([blob], `${imageKey}${extension}`, {
-        type: blob.type || "application/octet-stream"
-      })
-    }
-  }
-
+  const { payload, files } = await buildImagePayloadShared(items, keyPrefix)
+  Object.assign(filesPayload, files)
   return payload
+}
+
+async function buildImagePayloadShared(items: ImageFormItem[], keyPrefix: string): Promise<{
+  payload: ImageRequestDto[]
+  files: Record<string, File>
+}> {
+  return await buildMultipartImagePayload(
+    items,
+    (index) => `${keyPrefix}-image-${index + 1}`,
+    getImageUrl
+  )
 }
 
 async function handleSave() {
@@ -237,7 +190,7 @@ watch(
         setFormFromArticle(props.article)
       } else {
         resetForm()
-        articleForm.images.push(createImageItem("image-1"))
+        articleForm.images.push(createEmptyImageItem())
         articleForm.variants.push(createVariantItem())
       }
     }

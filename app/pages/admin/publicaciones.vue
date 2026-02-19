@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue"
 import { deletePublication, getPublication, getPublications } from "~/composables/api/publicationsApi"
 import type { PublicationResponseDto } from "~/types/publications"
 import type { PageResponse } from "~/types/page"
@@ -8,37 +7,32 @@ import { usePagination } from "~/composables/utils/usePagination"
 import PublicationCard from "~/components/cards/PublicationCard.vue"
 import BaseDialog from "~/components/BaseDialog.vue"
 import PublicationForm from "~/components/forms/publicationForm.vue"
+import { useCrudDialogs } from "~/composables/admin/useCrudDialogs"
+import AdminPagination from "~/components/admin/AdminPagination.vue"
+
+definePageMeta({
+  middleware: "auth"
+})
 
 const { pageSize, currentPage, next, prev } = usePagination(10)
 
-const selectedPublication = ref<PublicationResponseDto | null>(null)
-const editPublication = ref<PublicationResponseDto | null>(null)
-const viewModal = ref(false)
-const createModal = ref(false)
-const isLoadingEdit = ref(false)
-
-function openView(item: PublicationResponseDto) {
-  selectedPublication.value = item
-  viewModal.value = true
-}
-
-function openCreate() {
-  editPublication.value = null
-  createModal.value = true
-}
-
-async function openEdit(item: PublicationResponseDto) {
-  isLoadingEdit.value = true
-  try {
-    const fullPublication = await getPublication(item.slug)
-    editPublication.value = fullPublication
-    createModal.value = true
-  } catch (error) {
+const {
+  selectedItem: selectedPublication,
+  editItem: editPublication,
+  viewModal,
+  createModal,
+  isLoadingEdit,
+  openView,
+  openCreate,
+  openEdit
+} = useCrudDialogs<PublicationResponseDto>({
+  async loadForEdit(item) {
+    return await getPublication(item.slug)
+  },
+  onEditError(error) {
     console.error("Error cargando publicacion completa:", error)
-  } finally {
-    isLoadingEdit.value = false
   }
-}
+})
 
 function handleSaved() {
   refresh()
@@ -109,19 +103,12 @@ async function handleDelete(item: PublicationResponseDto) {
       </tbody>
     </table>
 
-    <div class="pagination">
-      <button @click="prev()" :disabled="currentPage === 0">
-        ?
-      </button>
-
-      <span>
-        Pagina {{ currentPage + 1 }} de {{ data.totalPages }}
-      </span>
-
-      <button @click="next(data.totalPages)" :disabled="currentPage >= data.totalPages - 1">
-        ?
-      </button>
-    </div>
+    <AdminPagination
+      :current-page="currentPage"
+      :total-pages="data.totalPages"
+      @prev="prev"
+      @next="next"
+    />
   </div>
 
   <BaseDialog v-model="viewModal">

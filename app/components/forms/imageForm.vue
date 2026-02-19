@@ -25,7 +25,7 @@ function createClientId() {
 }
 
 function copyItems(items: ImageFormItem[]) {
-  return [...items]
+  return items.map((item) => ({ ...item }))
 }
 
 function syncImageNames(items: ImageFormItem[]) {
@@ -35,7 +35,6 @@ function syncImageNames(items: ImageFormItem[]) {
 }
 
 function updateItems(items: ImageFormItem[]) {
-  console.log(items)
   emit("update:modelValue", items)
 }
 
@@ -54,15 +53,10 @@ function addImage() {
 }
 
 function removeImageById(clientId: string) {
-  console.log("removeImageById", clientId)
-  console.log(props.modelValue)
   const next = copyItems(props.modelValue)
   const index = next.findIndex((item) => item.clientId === clientId)
-  console.log(next)
-  console.log(index)
   if (index === -1) return
   next.splice(index, 1)
-  console.log(next)
   syncImageNames(next)
   updateItems(next)
 }

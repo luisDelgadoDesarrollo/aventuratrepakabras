@@ -1,6 +1,5 @@
-import { apiFetch } from "~/composables/api/apiClient"
+import { apiFetch, apiFetchAuth, clubPath } from "~/composables/api/apiClient"
 import { appendFilesPart, appendJsonPart, type MultipartFiles } from "~/composables/api/multipart"
-import { useAuth } from "~/composables/utils/auth"
 import type { PageResponse } from "~/types/page"
 import type { ArticleDto, CreateArticleRequestDto } from "~/types/articles"
 
@@ -16,38 +15,24 @@ const buildArticleFormData = (
 }
 
 export const getArticles = (page = 0, size = 10) => {
-  const config = useRuntimeConfig()
-
-  return apiFetch<PageResponse<ArticleDto>>(
-    `/clubs/${config.public.clubSlug}/articles?page=${page}&size=${size}`
-  )
+  return apiFetch<PageResponse<ArticleDto>>(clubPath(`/articles?page=${page}&size=${size}`))
 }
 
 export const getArticle = (articleId: number | string) => {
-  const config = useRuntimeConfig()
-
-  return apiFetch<ArticleDto>(
-    `/clubs/${config.public.clubSlug}/articles/${articleId}`
-  )
+  return apiFetch<ArticleDto>(clubPath(`/articles/${articleId}`))
 }
 
 export const createArticle = async (
   request: CreateArticleRequestDto,
   files: MultipartFiles = {}
 ) => {
-  const config = useRuntimeConfig()
-  const { accessToken } = useAuth()
   const formData = buildArticleFormData(request, files)
 
-  return await $fetch(
-    `${config.public.apiBase}/clubs/${config.public.clubSlug}/articles`,
+  return await apiFetchAuth<void>(
+    clubPath("/articles"),
     {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken.value}`
-      },
-      body: formData,
-      credentials: "include"
+      body: formData
     }
   )
 }
@@ -57,35 +42,22 @@ export const updateArticle = async (
   request: CreateArticleRequestDto,
   files: MultipartFiles = {}
 ) => {
-  const config = useRuntimeConfig()
-  const { accessToken } = useAuth()
   const formData = buildArticleFormData(request, files)
 
-  return await $fetch(
-    `${config.public.apiBase}/clubs/${config.public.clubSlug}/articles/${articleId}`,
+  return await apiFetchAuth<void>(
+    clubPath(`/articles/${articleId}`),
     {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${accessToken.value}`
-      },
-      body: formData,
-      credentials: "include"
+      body: formData
     }
   )
 }
 
-export const deleteArticle = async (articleId: number) => {
-  const config = useRuntimeConfig()
-  const { accessToken } = useAuth()
-
-  return await $fetch<void>(
-    `${config.public.apiBase}/clubs/${config.public.clubSlug}/articles/${articleId}`,
+export const deleteArticle = async (articleId: number | string) => {
+  return await apiFetchAuth<void>(
+    clubPath(`/articles/${articleId}`),
     {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${accessToken.value}`
-      },
-      credentials: "include"
+      method: "DELETE"
     }
   )
 }

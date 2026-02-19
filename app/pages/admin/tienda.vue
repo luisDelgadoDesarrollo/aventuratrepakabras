@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import {computed, ref} from "vue"
+import { computed } from "vue"
 import ArticleForm from "~/components/forms/articleForm.vue"
 import {deleteArticle, getArticle, getArticles} from "~/composables/api/articlesApi"
 import {usePagination} from "~/composables/utils/usePagination"
 import type {ArticleDto} from "~/types/articles"
 import type {PageResponse} from "~/types/page"
+import { useCrudDialogs } from "~/composables/admin/useCrudDialogs"
+import AdminPagination from "~/components/admin/AdminPagination.vue"
 
 definePageMeta({
   middleware: "auth"
@@ -12,9 +14,20 @@ definePageMeta({
 
 const { pageSize, currentPage, next, prev } = usePagination(10)
 
-const editArticle = ref<ArticleDto | null>(null)
-const createModal = ref(false)
-const isLoadingEdit = ref(false)
+const {
+  editItem: editArticle,
+  createModal,
+  isLoadingEdit,
+  openCreate,
+  openEdit
+} = useCrudDialogs<ArticleDto>({
+  async loadForEdit(item) {
+    return await getArticle(item.slug)
+  },
+  onEditError(editError) {
+    console.error("Error cargando articulo completo:", editError)
+  }
+})
 
 const { data, pending, error, refresh } = await useAsyncData<PageResponse<ArticleDto>>(
   "admin-articles",
@@ -35,23 +48,6 @@ const { data, pending, error, refresh } = await useAsyncData<PageResponse<Articl
 const totalVariants = computed(() =>
   (data.value?.content ?? []).reduce((sum, article) => sum + (article.variants?.length ?? 0), 0)
 )
-
-function openCreate() {
-  editArticle.value = null
-  createModal.value = true
-}
-
-async function openEdit(item: ArticleDto) {
-  isLoadingEdit.value = true
-  try {
-    editArticle.value = await getArticle(item.slug)
-    createModal.value = true
-  } catch (editError) {
-    console.error("Error cargando articulo completo:", editError)
-  } finally {
-    isLoadingEdit.value = false
-  }
-}
 
 function handleSaved() {
   refresh()
@@ -170,19 +166,12 @@ async function handleDelete(item: ArticleDto) {
         </tbody>
       </table>
 
-      <div class="pagination">
-        <button @click="prev()" :disabled="currentPage === 0">
-          <
-        </button>
-
-        <span>
-          Pagina {{ currentPage + 1 }} de {{ data.totalPages }}
-        </span>
-
-        <button @click="next(data.totalPages)" :disabled="currentPage >= data.totalPages - 1">
-          >
-        </button>
-      </div>
+      <AdminPagination
+        :current-page="currentPage"
+        :total-pages="data.totalPages"
+        @prev="prev"
+        @next="next"
+      />
     </div>
 
     <ArticleForm
