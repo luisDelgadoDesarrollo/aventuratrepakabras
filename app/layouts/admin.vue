@@ -14,7 +14,7 @@ async function logout() {
 
     <header class="admin-header">
       <div class="container header-inner">
-        <span class="brand-name">AventuraTrepakabras Admin</span>
+        <span class="brand-name">Monitor de montaña Admin</span>
 
         <button class="logout-btn" @click="logout">
           Cerrar sesion

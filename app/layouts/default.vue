@@ -81,8 +81,8 @@ function closeMenu() {
         </button>
 
         <NuxtLink to="/" class="brand">
-          <img src="/logo.png" alt="Logo" class="brand-logo" />
-          <span class="brand-name">AventuraTrepakabras</span>
+          <img src="/logo_montaña.jpg" alt="Logo" class="brand-logo" />
+          <span class="brand-name">Monitor de montaña</span>
         </NuxtLink>
 
         <nav :class="['nav', { open: isMenuOpen }]">
@@ -135,7 +135,7 @@ function closeMenu() {
 
     <footer class="footer">
       <div class="container">
-        &copy; {{ new Date().getFullYear() }} AventuraTrepakabras
+        &copy; {{ new Date().getFullYear() }} Monitor de montaña
       </div>
     </footer>
   </div>
