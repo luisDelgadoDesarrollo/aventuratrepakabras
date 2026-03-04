@@ -9,3 +9,8 @@ export interface RuleResponseDto {
     ruleId: number
     rule: string
 }
+
+export interface PriceDto {
+    title: string
+    price: number | string
+}

@@ -68,11 +68,12 @@ function isDone(activity: ActivityResponseDto) {
   <section class="activities-year-page">
     <header class="page-header">
       <h1>Actividades del {{ year }}</h1>
+      <NuxtLink to="/actividades" class="back-btn">Volver a años</NuxtLink>
     </header>
 
     <p v-if="pending" class="info-text">Cargando actividades...</p>
     <p v-else-if="error" class="error-text">No se han podido cargar las actividades.</p>
-    <p v-else-if="(data ?? []).length === 0" class="info-text">No hay actividades para este anio.</p>
+    <p v-else-if="(data ?? []).length === 0" class="info-text">No hay actividades para este año.</p>
 
     <div v-else class="months-list">
       <section v-for="group in monthGroups" :key="group.monthIndex" class="month-section">
@@ -107,6 +108,13 @@ function isDone(activity: ActivityResponseDto) {
 .page-header h1 {
   margin: 0;
   color: var(--color-primary);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .info-text {
@@ -150,6 +158,11 @@ function isDone(activity: ActivityResponseDto) {
 }
 
 @media (max-width: 900px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .activities-grid {
     grid-template-columns: 1fr;
   }

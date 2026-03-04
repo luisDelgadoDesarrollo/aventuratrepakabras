@@ -10,7 +10,11 @@ const signupModal = ref(false)
 const signupStatus = ref("")
 
 const activitySlug = computed(() => String(route.params.activitySlug ?? ""))
+const activityYear = computed(() => String(route.params.year ?? ""))
 const clubSlug = computed(() => String(config.public.clubSlug ?? ""))
+const backToList = computed(() => {
+  return activityYear.value ? `/actividades/${activityYear.value}` : "/actividades"
+})
 
 const { data: activity, pending, error } = await useAsyncData<ActivityResponseDto>(
   () => `activity-${activitySlug.value}`,
@@ -42,6 +46,10 @@ function onSignupSubmitted() {
 
 <template>
   <section class="activity-detail-page">
+    <div class="top-actions">
+      <NuxtLink :to="backToList" class="back-btn">Volver a actividades</NuxtLink>
+    </div>
+
     <p v-if="pending" class="info-text">Cargando actividad...</p>
     <p v-else-if="error" class="error-text">No se ha podido cargar la actividad.</p>
 
@@ -98,6 +106,12 @@ function onSignupSubmitted() {
 <style scoped>
 .activity-detail-page {
   padding: 1rem 0;
+}
+
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
 }
 
 .info-text {

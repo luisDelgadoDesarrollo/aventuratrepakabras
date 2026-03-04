@@ -18,6 +18,10 @@ const { data: article, pending, error } = await useAsyncData<ArticleDto>(
 
 <template>
   <section class="article-page">
+    <div class="top-actions">
+      <NuxtLink to="/articulos" class="back-btn">Volver a articulos</NuxtLink>
+    </div>
+
     <p v-if="pending">Cargando articulo...</p>
 
     <p v-else-if="error">
@@ -38,5 +42,10 @@ const { data: article, pending, error } = await useAsyncData<ArticleDto>(
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

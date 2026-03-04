@@ -11,25 +11,29 @@ const publicationSlug = computed(() => {
 })
 
 const { data: publication, pending, error } = await useAsyncData<PublicationResponseDto>(
-    () => getPublication(publicationSlug.value),
-    {
-      watch: [publicationSlug]
-    }
+  () => getPublication(publicationSlug.value),
+  {
+    watch: [publicationSlug]
+  }
 )
 </script>
 
 <template>
   <section class="publication-page">
-    <p v-if="pending">Cargando publicación...</p>
+    <div class="top-actions">
+      <NuxtLink to="/blog" class="back-btn">Volver al blog</NuxtLink>
+    </div>
+
+    <p v-if="pending">Cargando publicacion...</p>
 
     <p v-else-if="error">
-      No se ha podido cargar la publicación.
+      No se ha podido cargar la publicacion.
     </p>
 
     <PublicationCard
-        v-else-if="publication"
-        :publication="publication"
-        :collapsible="false"
+      v-else-if="publication"
+      :publication="publication"
+      :collapsible="false"
     />
   </section>
 </template>
@@ -39,5 +43,10 @@ const { data: publication, pending, error } = await useAsyncData<PublicationResp
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

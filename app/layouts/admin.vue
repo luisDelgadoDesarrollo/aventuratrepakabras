@@ -28,6 +28,7 @@ async function logout() {
         <NuxtLink to="/admin/publicaciones">Publicaciones</NuxtLink>
         <NuxtLink to="/admin/actividades">Actividades</NuxtLink>
         <NuxtLink to="/admin/tienda">Tienda</NuxtLink>
+        <NuxtLink to="/admin/precios">Precios</NuxtLink>
         <NuxtLink to="/admin/reglas">Reglas</NuxtLink>
         <NuxtLink to="/admin/documentacion">Documentacion</NuxtLink>
         <NuxtLink to="/admin/nosotros">Nosotros</NuxtLink>

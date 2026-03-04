@@ -65,7 +65,12 @@ const paginationItems = computed<PaginationItem[]>(() => {
 </script>
 
 <template>
-  <div v-if="data" class="publications-container">
+  <section class="blog-page">
+    <div class="top-actions">
+      <NuxtLink to="/" class="back-btn">Volver al inicio</NuxtLink>
+    </div>
+
+    <div v-if="data" class="publications-container">
 
     <NuxtLink
         v-for="p in data.content"
@@ -110,10 +115,22 @@ const paginationItems = computed<PaginationItem[]>(() => {
       </button>
     </div>
 
-  </div>
+    </div>
+  </section>
 </template>
 
 <style scoped>
+.blog-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .publications-container {
   display: flex;
   flex-direction: column;

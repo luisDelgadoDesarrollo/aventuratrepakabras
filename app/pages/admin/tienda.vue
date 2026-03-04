@@ -70,6 +70,7 @@ async function handleDelete(item: ArticleDto) {
     <div class="admin-page-header">
       <h1 class="admin-page-title">Tienda</h1>
       <div class="admin-header-actions">
+        <NuxtLink to="/admin" class="back-btn">Volver al panel</NuxtLink>
         <button class="primary-btn edit-new-btn" @click="openCreate">
           + Nuevo articulo
         </button>

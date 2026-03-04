@@ -70,7 +70,12 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <section class="contact-section">
+  <section class="contact-page">
+    <div class="top-actions">
+      <NuxtLink to="/" class="back-btn">Volver al inicio</NuxtLink>
+    </div>
+
+    <section class="contact-section">
 
     <!-- CARD INFO IZQUIERDA -->
     <div class="info-card">
@@ -133,10 +138,22 @@ async function handleSubmit() {
       <p v-if="success" class="success">Mensaje enviado correctamente ✅</p>
     </form>
 
+    </section>
   </section>
 </template>
 
 <style scoped>
+
+.contact-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
+}
 
 /* CONTENEDOR GENERAL */
 .contact-section {

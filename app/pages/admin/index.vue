@@ -35,6 +35,12 @@ definePageMeta({
     />
 
     <AdminCard
+        title="Precios"
+        description="Editar cuotas y precios de secretaria"
+        route="/admin/precios"
+    />
+
+    <AdminCard
         title="Documentacion"
         description="Subir o modificar los diferentes elementos del club"
         route="/admin/documentacion"

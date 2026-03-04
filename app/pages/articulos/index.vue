@@ -74,6 +74,10 @@ const paginationItems = computed<PaginationItem[]>(() => {
 
 <template>
   <section class="articles-page">
+    <div class="top-actions">
+      <NuxtLink to="/" class="back-btn">Volver al inicio</NuxtLink>
+    </div>
+
     <h1 class="page-title">Articulos</h1>
 
     <p v-if="pending">Cargando articulos...</p>
@@ -132,6 +136,11 @@ const paginationItems = computed<PaginationItem[]>(() => {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .page-title {

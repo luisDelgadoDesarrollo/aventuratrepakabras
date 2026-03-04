@@ -12,13 +12,17 @@ const years = computed(() => (data.value ?? []).slice().sort((a, b) => b - a))
 
 <template>
   <section class="activities-years-page">
+    <div class="top-actions">
+      <NuxtLink to="/" class="back-btn">Volver al inicio</NuxtLink>
+    </div>
+
     <header class="page-header">
-      <h1>Anios de las actividades</h1>
-      <p>Selecciona un anio para ver las actividades publicadas.</p>
+      <h1>Años de las actividades</h1>
+      <p>Selecciona un año para ver las actividades publicadas.</p>
     </header>
 
-    <p v-if="pending" class="info-text">Cargando anios...</p>
-    <p v-else-if="error" class="error-text">No se han podido cargar los anios.</p>
+    <p v-if="pending" class="info-text">Cargando años...</p>
+    <p v-else-if="error" class="error-text">No se han podido cargar los años.</p>
     <p v-else-if="years.length === 0" class="info-text">Aun no hay actividades publicadas.</p>
 
     <div v-else class="years-grid">
@@ -36,6 +40,11 @@ const years = computed(() => (data.value ?? []).slice().sort((a, b) => b - a))
   flex-direction: column;
   gap: 1rem;
   padding: 1rem 0;
+}
+
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .page-header h1 {

@@ -2,8 +2,10 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { sendFederationRequest, sendMembershipRequest } from "~/composables/api/contactApi"
 import { getDoc } from "~/composables/api/docApi"
+import { getPrices } from "~/composables/api/pricesApi"
 import { PdfType } from "~/types/pdf"
 import { useClubIban } from "~/composables/state/useClubIban"
+import type { PriceDto } from "~/types/club"
 
 interface DocumentCardItem {
   type: PdfType
@@ -35,6 +37,14 @@ const isSubmittingFederation = ref(false)
 const formStatusMessage = ref("")
 const formErrorMessage = ref("")
 const { iban: clubIban, isLoading: isLoadingIban } = useClubIban()
+const { data: prices, pending: isLoadingPrices } = await useAsyncData<PriceDto[]>(
+  "membership-prices",
+  () => getPrices(),
+  {
+    default: () => []
+  }
+)
+const membershipPrices = computed(() => prices.value ?? [])
 
 const documents: DocumentCardItem[] = [
   {
@@ -65,6 +75,15 @@ const federationDoc = computed(() =>
 
 function buildDownloadName(type: PdfType) {
   return `${type}_${config.public.clubSlug}.pdf`
+}
+
+function formatPrice(value: string | number) {
+  const numericValue = typeof value === "number" ? value : Number(String(value).replace(",", "."))
+  if (!Number.isFinite(numericValue)) return "-"
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR"
+  }).format(numericValue)
 }
 
 function onSignupRequestChange(event: Event) {
@@ -186,6 +205,7 @@ onBeforeUnmount(() => {
   <section class="secretaria-page">
     <header class="page-header">
       <h1>Secretaria</h1>
+      <NuxtLink to="/" class="back-btn">Volver al inicio</NuxtLink>
     </header>
 
     <h2 class="section-title">Gestiones</h2>
@@ -195,10 +215,18 @@ onBeforeUnmount(() => {
       <p class="reminder-text">
         Debes enviar el documento de alta de socios disponible mas abajo y adjuntar un justificante de pago con las cuotas indicadas al IBAN indicado.
       </p>
-      <p class="reminder-text">Cuota de inscripcion, nuevo socio: 10 euros</p>
-      <p class="reminder-text">Socio infantil 10-14: 12 euros</p>
-      <p class="reminder-text">Socio juvenil 15-17 anios: 16 euros</p>
-      <p class="reminder-text">Socio adulto 18-75: 20 euros</p>
+
+      <article class="join-prices-card">
+        <h4>Cuotas vigentes</h4>
+        <p v-if="isLoadingPrices" class="reminder-text">Cargando precios...</p>
+        <p v-else-if="membershipPrices.length === 0" class="reminder-text">No hay precios configurados.</p>
+        <ul v-else class="join-prices-list">
+          <li v-for="(price, index) in membershipPrices" :key="`${price.title}-${index}`">
+            <span>{{ price.title }}</span>
+            <strong>{{ formatPrice(price.price) }}</strong>
+          </li>
+        </ul>
+      </article>
 
       <form class="join-form" @submit.prevent>
         <div class="form-group">
@@ -322,6 +350,13 @@ onBeforeUnmount(() => {
   color: var(--color-primary);
 }
 
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .section-title {
   margin: 0;
   color: var(--color-primary);
@@ -345,6 +380,43 @@ onBeforeUnmount(() => {
 .reminder-text {
   margin: 0.2rem 0 0;
   color: var(--color-text);
+}
+
+.join-prices-card {
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  background: #f8fbff;
+  padding: 0.8rem;
+  margin-top: 0.25rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.join-prices-card h4 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.join-prices-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.join-prices-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px dashed #d2d8e2;
+  padding-bottom: 0.45rem;
+}
+
+.join-prices-list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .join-form {
@@ -440,6 +512,11 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .join-form {
     grid-template-columns: 1fr;
   }
